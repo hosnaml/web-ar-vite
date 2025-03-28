@@ -1,23 +1,25 @@
 import { Canvas } from "@react-three/fiber";
 import { createXRStore, XR, XROrigin } from "@react-three/xr";
-import { useState, useEffect } from "react";
-import "./App.css"; // Make sure CSS is imported
+import { useState, useEffect, useRef } from "react";
+import "./App.css";
 
-// Enable debugging where needed, but reduce verbosity
+// Enable debugging where needed
 const DEBUG = true;
 const logDebug = (...args) => DEBUG && console.log(...args);
 
-// Clean store creation
+// Modified store creation with improved logging
 const store = createXRStore({
-  onEnter: () => logDebug("XR session started"),
-  onExit: () => logDebug("XR session ended"),
+  onEnter: () => {
+    logDebug("XR session started");
+    // Force a global flag that we can check
+    window.xrSessionActive = true;
+  },
+  onExit: () => {
+    logDebug("XR session ended");
+    window.xrSessionActive = false;
+  },
   requiredFeatures: ["camera"],
-  optionalFeatures: [
-    "dom-overlay",
-    "light-estimation",
-    "hit-test",
-    "local-floor",
-  ],
+  optionalFeatures: ["dom-overlay", "light-estimation"],
   domOverlay: { root: document.body },
   blendMode: "alpha-blend",
 });
@@ -27,6 +29,9 @@ export default function App() {
   const [red, setRed] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Add a forced render state to guarantee cube visibility
+  const [forceRender, setForceRender] = useState(false);
+  const sessionStartTimeRef = useRef(null);
 
   // Check WebXR support once on component mount
   useEffect(() => {
@@ -49,31 +54,65 @@ export default function App() {
     }
   }, []);
 
-  // Simplified session tracking - single source of truth
+  // Enhanced session tracking with multiple triggers to ensure cube renders
   useEffect(() => {
     const handleSessionStateChange = (state) => {
-      // Set session active if both conditions are met
+      const newSessionActive = state.supported && state.active;
+
+      if (newSessionActive && !sessionActive) {
+        // Session just became active
+        sessionStartTimeRef.current = Date.now();
+        logDebug("Session became active at:", new Date().toISOString());
+
+        // Force render the cube
+        setForceRender(true);
+      }
+
+      setSessionActive(newSessionActive);
+
+      // Additional logging to debug cube visibility
       if (state.session && state.referenceSpace) {
-        setSessionActive(true);
-      } else {
-        setSessionActive(state.supported && state.active);
+        logDebug("Both session and referenceSpace available");
       }
     };
 
     const unsubscribe = store.subscribe(handleSessionStateChange);
     return () => unsubscribe();
-  }, []);
+  }, [sessionActive]);
 
-  // Streamlined enterAR function
+  // Check session state periodically to ensure cube renders
+  useEffect(() => {
+    if (sessionActive && sessionStartTimeRef.current) {
+      const checkInterval = setInterval(() => {
+        const elapsedTime = Date.now() - sessionStartTimeRef.current;
+
+        // If we've been active for 2+ seconds but cube might not be visible
+        if (elapsedTime > 2000 && !forceRender) {
+          logDebug("Forcing render after timeout");
+          setForceRender(true);
+        }
+
+        // Clear interval after 5 seconds
+        if (elapsedTime > 5000) {
+          clearInterval(checkInterval);
+        }
+      }, 1000);
+
+      return () => clearInterval(checkInterval);
+    }
+  }, [sessionActive, forceRender]);
+
+  // Improved enterAR function
   const enterAR = async () => {
     setLoading(true);
     try {
-      // Pre-warm camera
+      logDebug("Starting enterAR process");
+      // Pre-warm camera with lower resolution for performance
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 640 }, // Lower resolution for better performance
+          height: { ideal: 480 },
         },
       });
 
@@ -87,24 +126,34 @@ export default function App() {
       document.body.appendChild(video);
 
       // Play video
-      await video.play().catch(() => {});
+      await video
+        .play()
+        .catch((e) => logDebug("Video play error (can be ignored):", e));
 
-      // Wait for camera to warm up
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      logDebug("Camera preview initialized");
+
+      // Wait for camera to warm up (shorter time for better UX)
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Clean up
       stream.getTracks().forEach((track) => track.stop());
       video.remove();
+      logDebug("Camera warmup complete");
+
+      // Reset force render state before entering AR
+      setForceRender(false);
 
       // Enter AR mode
       await store.enterAR();
+      logDebug("store.enterAR() completed");
 
-      // Fallback in case session state doesn't update
+      // Force cube to appear after a delay
       setTimeout(() => {
-        if (!sessionActive) {
-          setSessionActive(true);
+        if (!forceRender) {
+          logDebug("Forcing render state via timeout");
+          setForceRender(true);
         }
-      }, 2000);
+      }, 1000);
     } catch (error) {
       console.error("AR initialization error:", error);
       alert("Camera access is required for AR functionality");
@@ -112,6 +161,12 @@ export default function App() {
       setLoading(false);
     }
   };
+
+  // Determine if we should render 3D objects - use multiple conditions
+  const shouldRender =
+    sessionActive ||
+    forceRender ||
+    (store.getState() && store.getState().session);
 
   return (
     <div className={`ar-container ${DEBUG ? "debug-border" : ""}`}>
@@ -132,57 +187,52 @@ export default function App() {
         </button>
       </div>
 
-      {/* Minimal debug overlay */}
+      {/* Enhanced debug overlay */}
       {DEBUG && (
         <div className="debug-overlay">
           WebXR: {isSupported ? "✓" : "✗"} | Session:{" "}
-          {sessionActive ? "Active" : "Inactive"}
+          {sessionActive ? "Active" : "Inactive"} | Force:{" "}
+          {forceRender ? "Yes" : "No"}
         </div>
       )}
 
       <Canvas
         className="ar-canvas"
         gl={{
-          alpha: true, // CRITICAL for iOS camera passthrough
-          antialias: true,
+          alpha: true,
+          antialias: false, // For better performance
           preserveDrawingBuffer: true,
-          clearColor: [0, 0, 0, 0], // fully transparent
+          clearColor: [0, 0, 0, 0],
           powerPreference: "high-performance",
         }}
         onCreated={(state) => {
-          // Force transparent background for the renderer
           state.gl.setClearColor(0, 0, 0, 0);
-          logDebug("Canvas created:", state);
+          logDebug("Canvas created");
         }}
       >
-        {/* Explicitly set background to transparent */}
         <color attach="background" args={[0, 0, 0, 0]} />
 
         <XR store={store}>
           <XROrigin />
-          {(sessionActive || store.getState().session) && (
+          {/* IMPORTANT CHANGE: More aggressive conditions to ensure rendering */}
+          {shouldRender && (
             <>
               <ambientLight intensity={0.8} />
               <directionalLight position={[5, 5, 5]} intensity={1} />
 
+              {/* Make the cube bigger and closer so it's easier to see */}
               <mesh
                 onClick={() => setRed(!red)}
-                position={[0, 1, -1]}
-                // Make the mesh more visible for testing
-                scale={[0.5, 0.5, 0.5]}
+                position={[0, 0.5, -0.7]} // Positioned closer and lower
+                scale={[0.5, 0.5, 0.5]} // Smaller but still visible
               >
                 <boxGeometry />
-                <meshBasicMaterial
-                  color={red ? "red" : "blue"}
-                  emissive={red ? "red" : "blue"}
-                  emissiveIntensity={0.5}
+                <meshStandardMaterial // Changed to StandardMaterial for better visibility
+                  color={red ? "#ff3030" : "#4040ff"} // Brighter colors
+                  emissive={red ? "#ff0000" : "#0000ff"}
+                  emissiveIntensity={0.8}
+                  roughness={0.2}
                 />
-              </mesh>
-
-              {/* Add a ground plane for reference */}
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-                <planeGeometry args={[10, 10]} />
-                <meshBasicMaterial color="#444444" opacity={0.5} transparent />
               </mesh>
             </>
           )}
