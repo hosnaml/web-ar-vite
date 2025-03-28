@@ -1,9 +1,10 @@
-import { Canvas, useLoader } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { createXRStore, XR, XROrigin } from "@react-three/xr";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { TextureLoader } from "three";
 import "./App.css";
-import aftonbladetImg from "./assets/www.aftonbladet.se.jpg";
+import ImagePlane from "./components/ImagePlane";
+import ARButton from "./components/ARButton";
+import DebugOverlay from "./components/DebugOverlay";
 
 // Enable debugging where needed
 const DEBUG = true;
@@ -28,24 +29,12 @@ const store = createXRStore({
     logDebug("XR session ended");
     window.xrSessionActive = false;
   },
-  requiredFeatures: ["camera"],
-  optionalFeatures: ["dom-overlay", "light-estimation"],
+  //requiredFeatures: ["camera"],
+  optionalFeatures: ["camera", "dom-overlay", "light-estimation", "hit-test"],
   domOverlay: { root: document.body },
   blendMode: "alpha-blend",
   environmentBlendMode: "alpha-blend",
 });
-
-// Define a component to handle the textured plane
-function ImagePlane(props) {
-  const texture = useLoader(TextureLoader, aftonbladetImg);
-
-  return (
-    <mesh {...props}>
-      <planeGeometry args={[1, 0.6]} />
-      <meshBasicMaterial map={texture} transparent />
-    </mesh>
-  );
-}
 
 export default function App() {
   const [isSupported, setIsSupported] = useState(true);
@@ -198,40 +187,30 @@ export default function App() {
         isIOSDevice ? "ios-device" : ""
       }`}
     >
-      {/* Button container */}
-      <div className="button-container">
-        <button
-          onClick={enterAR}
-          className="ar-button"
-          disabled={!isSupported || loading}
-        >
-          {loading
-            ? "Loading..."
-            : !isSupported
-            ? "AR Not Supported"
-            : sessionActive
-            ? "AR Running"
-            : "Enter AR"}
-        </button>
-      </div>
+      <ARButton
+        onClick={enterAR}
+        isSupported={isSupported}
+        loading={loading}
+        sessionActive={sessionActive}
+      />
 
-      {/* Enhanced debug overlay */}
       {DEBUG && (
-        <div className="debug-overlay">
-          WebXR: {isSupported ? "✓" : "✗"} | Session:{" "}
-          {sessionActive ? "Active" : "Inactive"} | Force:{" "}
-          {forceRender ? "Yes" : "No"} | iOS: {isIOSDevice ? "Yes" : "No"}
-        </div>
+        <DebugOverlay
+          isSupported={isSupported}
+          sessionActive={sessionActive}
+          forceRender={forceRender}
+          isIOSDevice={isIOSDevice}
+        />
       )}
 
       <Canvas
         className="ar-canvas"
         gl={{
           alpha: true,
-          antialias: isIOSDevice, // Better for iOS
+          antialias: isIOSDevice,
           preserveDrawingBuffer: true,
           clearColor: [0, 0, 0, 0],
-          premultipliedAlpha: false, // Better for transparency on iOS
+          premultipliedAlpha: false,
           powerPreference: "high-performance",
         }}
         onCreated={(state) => {
@@ -254,10 +233,10 @@ export default function App() {
               <ambientLight intensity={0.8} />
               <directionalLight position={[5, 5, 5]} intensity={1} />
 
-              {/* Image plane instead of cube */}
+              {/* Now using the imported component */}
               <ImagePlane
-                position={[0, 0.5, -0.7]}
-                scale={[0.6, 0.4, 1]}
+                position={[0, 0.4, -3]}
+                scale={[1.2, 6, 1]}
                 rotation={[0, 0, 0]}
               />
             </Suspense>
