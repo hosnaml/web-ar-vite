@@ -65,6 +65,14 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* Add these classes for HTML/body transparency */
+.transparent-bg {
+  background-color: transparent !important;
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

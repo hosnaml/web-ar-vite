@@ -1,11 +1,21 @@
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useLoader } from "@react-three/fiber";
 import { createXRStore, XR, XROrigin } from "@react-three/xr";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { TextureLoader } from "three";
 import "./App.css";
+import aftonbladetImg from "./assets/www.aftonbladet.se.jpg";
 
 // Enable debugging where needed
 const DEBUG = true;
 const logDebug = (...args) => DEBUG && console.log(...args);
+
+// Detect iOS devices
+const isIOS = () => {
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+};
 
 // Modified store creation with improved logging
 const store = createXRStore({
@@ -22,19 +32,35 @@ const store = createXRStore({
   optionalFeatures: ["dom-overlay", "light-estimation"],
   domOverlay: { root: document.body },
   blendMode: "alpha-blend",
+  environmentBlendMode: "alpha-blend",
 });
+
+// Define a component to handle the textured plane
+function ImagePlane(props) {
+  const texture = useLoader(TextureLoader, aftonbladetImg);
+
+  return (
+    <mesh {...props}>
+      <planeGeometry args={[1, 0.6]} />
+      <meshBasicMaterial map={texture} transparent />
+    </mesh>
+  );
+}
 
 export default function App() {
   const [isSupported, setIsSupported] = useState(true);
-  const [red, setRed] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
   const [loading, setLoading] = useState(false);
-  // Add a forced render state to guarantee cube visibility
   const [forceRender, setForceRender] = useState(false);
   const sessionStartTimeRef = useRef(null);
+  const [isIOSDevice, setIsIOSDevice] = useState(false);
 
   // Check WebXR support once on component mount
   useEffect(() => {
+    // Check if running on iOS
+    setIsIOSDevice(isIOS());
+    logDebug("Device is iOS:", isIOS());
+
     if ("xr" in navigator) {
       navigator.xr
         .isSessionSupported("immersive-ar")
@@ -54,7 +80,7 @@ export default function App() {
     }
   }, []);
 
-  // Enhanced session tracking with multiple triggers to ensure cube renders
+  // Enhanced session tracking with multiple triggers to ensure rendering
   useEffect(() => {
     const handleSessionStateChange = (state) => {
       const newSessionActive = state.supported && state.active;
@@ -64,13 +90,13 @@ export default function App() {
         sessionStartTimeRef.current = Date.now();
         logDebug("Session became active at:", new Date().toISOString());
 
-        // Force render the cube
+        // Force render
         setForceRender(true);
       }
 
       setSessionActive(newSessionActive);
 
-      // Additional logging to debug cube visibility
+      // Additional logging to debug visibility
       if (state.session && state.referenceSpace) {
         logDebug("Both session and referenceSpace available");
       }
@@ -80,13 +106,13 @@ export default function App() {
     return () => unsubscribe();
   }, [sessionActive]);
 
-  // Check session state periodically to ensure cube renders
+  // Check session state periodically to ensure rendering
   useEffect(() => {
     if (sessionActive && sessionStartTimeRef.current) {
       const checkInterval = setInterval(() => {
         const elapsedTime = Date.now() - sessionStartTimeRef.current;
 
-        // If we've been active for 2+ seconds but cube might not be visible
+        // If we've been active for 2+ seconds but might not be visible
         if (elapsedTime > 2000 && !forceRender) {
           logDebug("Forcing render after timeout");
           setForceRender(true);
@@ -120,9 +146,7 @@ export default function App() {
       const video = document.createElement("video");
       video.srcObject = stream;
       video.muted = true;
-      video.style.position = "absolute";
-      video.style.opacity = "0";
-      video.style.zIndex = "-1";
+      video.className = "camera-warmup";
       document.body.appendChild(video);
 
       // Play video
@@ -147,7 +171,7 @@ export default function App() {
       await store.enterAR();
       logDebug("store.enterAR() completed");
 
-      // Force cube to appear after a delay
+      // Force to appear after a delay
       setTimeout(() => {
         if (!forceRender) {
           logDebug("Forcing render state via timeout");
@@ -169,7 +193,11 @@ export default function App() {
     (store.getState() && store.getState().session);
 
   return (
-    <div className={`ar-container ${DEBUG ? "debug-border" : ""}`}>
+    <div
+      className={`ar-container ${DEBUG ? "debug-border" : ""} ${
+        isIOSDevice ? "ios-device" : ""
+      }`}
+    >
       {/* Button container */}
       <div className="button-container">
         <button
@@ -192,7 +220,7 @@ export default function App() {
         <div className="debug-overlay">
           WebXR: {isSupported ? "✓" : "✗"} | Session:{" "}
           {sessionActive ? "Active" : "Inactive"} | Force:{" "}
-          {forceRender ? "Yes" : "No"}
+          {forceRender ? "Yes" : "No"} | iOS: {isIOSDevice ? "Yes" : "No"}
         </div>
       )}
 
@@ -200,41 +228,39 @@ export default function App() {
         className="ar-canvas"
         gl={{
           alpha: true,
-          antialias: false, // For better performance
+          antialias: isIOSDevice, // Better for iOS
           preserveDrawingBuffer: true,
           clearColor: [0, 0, 0, 0],
+          premultipliedAlpha: false, // Better for transparency on iOS
           powerPreference: "high-performance",
         }}
         onCreated={(state) => {
           state.gl.setClearColor(0, 0, 0, 0);
+          if (isIOSDevice) {
+            state.gl.clear(
+              state.gl.COLOR_BUFFER_BIT | state.gl.DEPTH_BUFFER_BIT
+            );
+          }
           logDebug("Canvas created");
         }}
+        flat={isIOSDevice}
+        legacy={isIOSDevice}
       >
         <color attach="background" args={[0, 0, 0, 0]} />
-
         <XR store={store}>
           <XROrigin />
-          {/* IMPORTANT CHANGE: More aggressive conditions to ensure rendering */}
           {shouldRender && (
-            <>
+            <Suspense fallback={null}>
               <ambientLight intensity={0.8} />
               <directionalLight position={[5, 5, 5]} intensity={1} />
 
-              {/* Make the cube bigger and closer so it's easier to see */}
-              <mesh
-                onClick={() => setRed(!red)}
-                position={[0, 0.5, -0.7]} // Positioned closer and lower
-                scale={[0.5, 0.5, 0.5]} // Smaller but still visible
-              >
-                <boxGeometry />
-                <meshStandardMaterial // Changed to StandardMaterial for better visibility
-                  color={red ? "#ff3030" : "#4040ff"} // Brighter colors
-                  emissive={red ? "#ff0000" : "#0000ff"}
-                  emissiveIntensity={0.8}
-                  roughness={0.2}
-                />
-              </mesh>
-            </>
+              {/* Image plane instead of cube */}
+              <ImagePlane
+                position={[0, 0.5, -0.7]}
+                scale={[0.6, 0.4, 1]}
+                rotation={[0, 0, 0]}
+              />
+            </Suspense>
           )}
         </XR>
       </Canvas>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="transparent-bg">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -7,10 +7,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: https://launchar.app">
+    
+    <!-- Additional iOS-specific meta tags for camera transparency -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="transparent">
+    
     <script src="https://launchar.app/sdk/v1?key=PhDuyD4kPLSDsseHB77yy4tp35od7nIR&redirect=true"></script>
     <title>AR Experience</title>
+    <link rel="stylesheet" href="/index-styles.css">
   </head>
-  <body>
+  <body class="transparent-bg">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

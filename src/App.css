@@ -1,3 +1,26 @@
+/* iOS-specific styles for camera transparency */
+@supports (-webkit-touch-callout: none) {
+  body,
+  html,
+  #root {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: transparent !important;
+    background: transparent !important;
+  }
+
+  .ar-container {
+    background-color: transparent !important;
+    background: transparent !important;
+  }
+
+  .ar-canvas {
+    background: transparent !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
 /* Override default styles for AR experience */
 #root {
   max-width: none;
@@ -6,20 +29,23 @@
   margin: 0;
   padding: 0;
   text-align: center;
+  background-color: transparent !important;
 }
 
 /* Main container for AR experience */
 .ar-container {
   width: 100%;
   height: 100%;
-  background-color: transparent;
+  background-color: transparent !important;
   position: relative;
   overflow: hidden;
 }
 
-/* Debug border for troubleshooting */
-.debug-border {
-  border: 2px solid red;
+/* iOS-specific container styles */
+.ar-container.ios-device {
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Canvas styling */
@@ -30,7 +56,7 @@
   top: 0;
   left: 0;
   z-index: 10;
-  background: none;
+  background: transparent !important;
 }
 
 /* Button container */
@@ -74,4 +100,16 @@
   padding: 10px;
   z-index: 100;
   font-size: 12px;
+}
+
+/* Hidden video element for camera warmup */
+.camera-warmup {
+  position: absolute;
+  opacity: 0;
+  z-index: -1;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  top: 0;
+  left: 0;
 }
