@@ -28,6 +28,10 @@ export default function App() {
   const [sessionActive, setSessionActive] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    console.log("Session is active:", sessionActive);
+  }, [sessionActive]);
+
   // Check WebXR support once on component mount
   useEffect(() => {
     if ("xr" in navigator) {
@@ -167,9 +171,9 @@ export default function App() {
 
               <mesh
                 onClick={() => setRed(!red)}
-                position={[0, 1, -1]}
+                position={[0, 0, -0.5]}
                 // Make the mesh more visible for testing
-                scale={[0.5, 0.5, 0.5]}
+                scale={[1, 1, 1]}
               >
                 <boxGeometry />
                 <meshBasicMaterial
