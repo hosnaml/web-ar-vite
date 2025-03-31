@@ -1,39 +1,59 @@
 import { Canvas } from "@react-three/fiber";
 import { createXRStore, XR, XROrigin } from "@react-three/xr";
-import { useState, useEffect } from "react";
-import "./App.css"; // Make sure CSS is imported
+import { useState, useEffect, useRef, Suspense } from "react";
+import "./App.css";
+import ImagePlane from "./components/ImagePlane";
+import ARButton from "./components/ARButton";
+import DebugOverlay from "./components/DebugOverlay";
 
-// Enable debugging where needed, but reduce verbosity
+// Enable debugging where needed
 const DEBUG = true;
 const logDebug = (...args) => DEBUG && console.log(...args);
 
-// Clean store creation
+// Detect iOS devices
+const isIOS = () => {
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+};
+
+// Modified store creation with improved logging
 const store = createXRStore({
-  onEnter: () => logDebug("XR session started"),
-  onExit: () => logDebug("XR session ended"),
-  requiredFeatures: ["camera"],
-  optionalFeatures: [
-    "dom-overlay",
-    "light-estimation",
-    "hit-test",
-    "local-floor",
-  ],
+  onEnter: () => {
+    logDebug("XR session started");
+    // Force a global flag that we can check
+    window.xrSessionActive = true;
+  },
+  onExit: () => {
+    logDebug("XR session ended");
+    window.xrSessionActive = false;
+  },
+  //requiredFeatures: ["camera"],
+  optionalFeatures: ["camera", "dom-overlay", "light-estimation", "hit-test"],
   domOverlay: { root: document.body },
   blendMode: "alpha-blend",
+  environmentBlendMode: "alpha-blend",
 });
 
 export default function App() {
   const [isSupported, setIsSupported] = useState(true);
-  const [red, setRed] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     console.log("Session is active:", sessionActive);
   }, [sessionActive]);
+  const [forceRender, setForceRender] = useState(false);
+  const sessionStartTimeRef = useRef(null);
+  const [isIOSDevice, setIsIOSDevice] = useState(false);
 
   // Check WebXR support once on component mount
   useEffect(() => {
+    // Check if running on iOS
+    setIsIOSDevice(isIOS());
+    logDebug("Device is iOS:", isIOS());
+
     if ("xr" in navigator) {
       navigator.xr
         .isSessionSupported("immersive-ar")
@@ -53,31 +73,65 @@ export default function App() {
     }
   }, []);
 
-  // Simplified session tracking - single source of truth
+  // Enhanced session tracking with multiple triggers to ensure rendering
   useEffect(() => {
     const handleSessionStateChange = (state) => {
-      // Set session active if both conditions are met
+      const newSessionActive = state.supported && state.active;
+
+      if (newSessionActive && !sessionActive) {
+        // Session just became active
+        sessionStartTimeRef.current = Date.now();
+        logDebug("Session became active at:", new Date().toISOString());
+
+        // Force render
+        setForceRender(true);
+      }
+
+      setSessionActive(newSessionActive);
+
+      // Additional logging to debug visibility
       if (state.session && state.referenceSpace) {
-        setSessionActive(true);
-      } else {
-        setSessionActive(state.supported && state.active);
+        logDebug("Both session and referenceSpace available");
       }
     };
 
     const unsubscribe = store.subscribe(handleSessionStateChange);
     return () => unsubscribe();
-  }, []);
+  }, [sessionActive]);
 
-  // Streamlined enterAR function
+  // Check session state periodically to ensure rendering
+  useEffect(() => {
+    if (sessionActive && sessionStartTimeRef.current) {
+      const checkInterval = setInterval(() => {
+        const elapsedTime = Date.now() - sessionStartTimeRef.current;
+
+        // If we've been active for 2+ seconds but might not be visible
+        if (elapsedTime > 2000 && !forceRender) {
+          logDebug("Forcing render after timeout");
+          setForceRender(true);
+        }
+
+        // Clear interval after 5 seconds
+        if (elapsedTime > 5000) {
+          clearInterval(checkInterval);
+        }
+      }, 1000);
+
+      return () => clearInterval(checkInterval);
+    }
+  }, [sessionActive, forceRender]);
+
+  // Improved enterAR function
   const enterAR = async () => {
     setLoading(true);
     try {
-      // Pre-warm camera
+      logDebug("Starting enterAR process");
+      // Pre-warm camera with lower resolution for performance
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 640 }, // Lower resolution for better performance
+          height: { ideal: 480 },
         },
       });
 
@@ -85,30 +139,38 @@ export default function App() {
       const video = document.createElement("video");
       video.srcObject = stream;
       video.muted = true;
-      video.style.position = "absolute";
-      video.style.opacity = "0";
-      video.style.zIndex = "-1";
+      video.className = "camera-warmup";
       document.body.appendChild(video);
 
       // Play video
-      await video.play().catch(() => {});
+      await video
+        .play()
+        .catch((e) => logDebug("Video play error (can be ignored):", e));
 
-      // Wait for camera to warm up
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      logDebug("Camera preview initialized");
+
+      // Wait for camera to warm up (shorter time for better UX)
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Clean up
       stream.getTracks().forEach((track) => track.stop());
       video.remove();
+      logDebug("Camera warmup complete");
+
+      // Reset force render state before entering AR
+      setForceRender(false);
 
       // Enter AR mode
       await store.enterAR();
+      logDebug("store.enterAR() completed");
 
-      // Fallback in case session state doesn't update
+      // Force to appear after a delay
       setTimeout(() => {
-        if (!sessionActive) {
-          setSessionActive(true);
+        if (!forceRender) {
+          logDebug("Forcing render state via timeout");
+          setForceRender(true);
         }
-      }, 2000);
+      }, 1000);
     } catch (error) {
       console.error("AR initialization error:", error);
       alert("Camera access is required for AR functionality");
@@ -117,63 +179,69 @@ export default function App() {
     }
   };
 
-  return (
-    <div className={`ar-container ${DEBUG ? "debug-border" : ""}`}>
-      {/* Button container */}
-      <div className="button-container">
-        <button
-          onClick={enterAR}
-          className="ar-button"
-          disabled={!isSupported || loading}
-        >
-          {loading
-            ? "Loading..."
-            : !isSupported
-            ? "AR Not Supported"
-            : sessionActive
-            ? "AR Running"
-            : "Enter AR"}
-        </button>
-      </div>
+  // Determine if we should render 3D objects - use multiple conditions
+  const shouldRender =
+    sessionActive ||
+    forceRender ||
+    (store.getState() && store.getState().session);
 
-      {/* Minimal debug overlay */}
+  return (
+    <div
+      className={`ar-container ${DEBUG ? "debug-border" : ""} ${
+        isIOSDevice ? "ios-device" : ""
+      }`}
+    >
+      <ARButton
+        onClick={enterAR}
+        isSupported={isSupported}
+        loading={loading}
+        sessionActive={sessionActive}
+      />
+
       {DEBUG && (
-        <div className="debug-overlay">
-          WebXR: {isSupported ? "✓" : "✗"} | Session:{" "}
-          {sessionActive ? "Active" : "Inactive"}
-        </div>
+        <DebugOverlay
+          isSupported={isSupported}
+          sessionActive={sessionActive}
+          forceRender={forceRender}
+          isIOSDevice={isIOSDevice}
+        />
       )}
 
       <Canvas
         className="ar-canvas"
         gl={{
-          alpha: true, // CRITICAL for iOS camera passthrough
-          antialias: true,
+          alpha: true,
+          antialias: isIOSDevice,
           preserveDrawingBuffer: true,
-          clearColor: [0, 0, 0, 0], // fully transparent
+          clearColor: [0, 0, 0, 0],
+          premultipliedAlpha: false,
           powerPreference: "high-performance",
         }}
         onCreated={(state) => {
-          // Force transparent background for the renderer
           state.gl.setClearColor(0, 0, 0, 0);
-          logDebug("Canvas created:", state);
+          if (isIOSDevice) {
+            state.gl.clear(
+              state.gl.COLOR_BUFFER_BIT | state.gl.DEPTH_BUFFER_BIT
+            );
+          }
+          logDebug("Canvas created");
         }}
+        flat={isIOSDevice}
+        legacy={isIOSDevice}
       >
-        {/* Explicitly set background to transparent */}
         <color attach="background" args={[0, 0, 0, 0]} />
-
         <XR store={store}>
           <XROrigin />
-          {(sessionActive || store.getState().session) && (
-            <>
+          {shouldRender && (
+            <Suspense fallback={null}>
               <ambientLight intensity={0.8} />
               <directionalLight position={[5, 5, 5]} intensity={1} />
 
               <mesh
                 onClick={() => setRed(!red)}
-                position={[0, 0, -0.5]}
+                position={[0, 1, -1]}
                 // Make the mesh more visible for testing
-                scale={[1, 1, 1]}
+                scale={[0.5, 0.5, 0.5]}
               >
                 <boxGeometry />
                 <meshBasicMaterial
