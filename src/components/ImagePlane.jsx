@@ -13,6 +13,10 @@ const ImagePlane = (props) => {
   const materialRef = useRef();
   const meshRef = useRef();
 
+  // Add state to track initial positioning
+  const initialPositionSet = useRef(false);
+  const initialPosition = useRef(new THREE.Vector3());
+
   // Check if device is iOS
   const isIOS = () => {
     const userAgent = navigator.userAgent.toLowerCase();
@@ -25,28 +29,53 @@ const ImagePlane = (props) => {
   const isIOSDevice = isIOS();
   const DEBUG = true; // Enable debugging
 
-  // Add positioning logic for the image plane
+  // Modified positioning logic to stay fixed at initial position - with increased distance
   useFrame(({ camera }) => {
     if (!meshRef.current) return;
 
-    // Get the current camera position for reference
-    const cameraPosition = camera.position;
+    // If initial position hasn't been set yet, set it once
+    if (!initialPositionSet.current) {
+      // Get the current camera position and direction
+      const cameraPosition = camera.position;
+      const cameraDirection = new THREE.Vector3(0, 0, -1);
+      cameraDirection.applyQuaternion(camera.quaternion);
 
-    // Calculate a position that's in front and upward from camera
-    // Maintain z-position from props or use a default distance
-    const zDistance = props.position?.[2] || -1.0;
+      // Calculate initial position that's directly in front
+      // Increased distance from 2 meters to 3.5 meters
+      const zDistance = props.position?.[2] || -3.5; // 3.5 meters in front
 
-    // Set the position to be centered but higher up
-    // This keeps the image in front but elevates it
-    meshRef.current.position.set(
-      props.position?.[0] || 0, // Keep x-position from props or default to 0
-      (props.position?.[1] || 0) + 0.5, // Add 0.5 units to y-position to raise it
-      zDistance
-    );
+      const forwardOffset = cameraDirection
+        .clone()
+        .multiplyScalar(Math.abs(zDistance));
 
-    // Optional: make the image always face the camera (billboard effect)
-    // Uncomment the next line if you want this behavior
-    // meshRef.current.lookAt(camera.position);
+      // Set initial position
+      initialPosition.current.set(
+        cameraPosition.x + forwardOffset.x,
+        // Increased height to position at eye level + 0.5 meters
+        cameraPosition.y + 0.5, // Higher above eye level for better visibility
+        cameraPosition.z + forwardOffset.z
+      );
+
+      // Move mesh to initial position
+      meshRef.current.position.copy(initialPosition.current);
+
+      // Scale up the image to compensate for farther distance
+      // Only adjust scale if it wasn't explicitly set in props
+      if (!props.scale) {
+        // Make it larger since it's further away
+        meshRef.current.scale.set(3.0, 3.0, 1);
+      }
+
+      // Mark initial position as set
+      initialPositionSet.current = true;
+      console.log(
+        "Initial position set (increased distance):",
+        initialPosition.current
+      );
+    }
+
+    // Always make the image face the camera, even though position is fixed
+    meshRef.current.lookAt(camera.position);
   });
 
   // Universal texture loading approach that works on both platforms

@@ -263,10 +263,9 @@ export default function App() {
               <ambientLight intensity={5.0} />
               <directionalLight position={[0, 0, -1]} intensity={5.0} />
 
-              {/* Position the image closer to the camera */}
               <ImagePlane
-                position={[0, 0.7, -1.0]} // Higher Y value and further away in Z
-                scale={[2.0, 2.0, 1]}
+                position={[0, 0.7, -3.5]} // Changed Z from -1.0 to -3.5 for more distance
+                scale={[3.0, 3.0, 1]} // Increased scale to compensate for distance
                 rotation={[0, 0, 0]}
               />
 
