@@ -14,7 +14,7 @@ const logDebug = (...args) => DEBUG && console.log(...args);
 const isIOS = () => {
   return (
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+    (navigator === "MacIntel" && navigator.maxTouchPoints > 1)
   );
 };
 
@@ -236,27 +236,12 @@ export default function App() {
             <Suspense fallback={null}>
               <ambientLight intensity={0.8} />
               <directionalLight position={[5, 5, 5]} intensity={1} />
-
-              <mesh
-                onClick={() => setRed(!red)}
-                position={[0, 1, -1]}
-                // Make the mesh more visible for testing
-                scale={[0.5, 0.5, 0.5]}
-              >
-                <boxGeometry />
-                <meshBasicMaterial
-                  color={red ? "red" : "blue"}
-                  emissive={red ? "red" : "blue"}
-                  emissiveIntensity={0.5}
-                />
-              </mesh>
-
-              {/* Add a ground plane for reference */}
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-                <planeGeometry args={[10, 10]} />
-                <meshBasicMaterial color="#444444" opacity={0.5} transparent />
-              </mesh>
-            </>
+              <ImagePlane
+                position={[0, 0.4, -3]}
+                scale={[1.2, 6, 1]}
+                rotation={[0, 0, 0]}
+              />
+            </Suspense>
           )}
         </XR>
       </Canvas>

@@ -1,10 +1,11 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts: ['sight-begin-donation-turned.trycloudflare.com']
-  }
-})
+    host: true,
+    allowedHosts: ["musical-public-keen-stupid.trycloudflare.com"],
+  },
+});
