@@ -1,34 +1,12 @@
 import { useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three";
-<<<<<<< Updated upstream
-import { useState } from "react";
-=======
 import { useState, useEffect, useRef } from "react";
->>>>>>> Stashed changes
 import * as THREE from "three";
 import aftonbladetImg from "../assets/www.aftonbladet.se.jpg";
 
-// Component for rendering a textured plane with error handling
+// Component for rendering a textured plane with platform-specific handling
 const ImagePlane = (props) => {
   const [hasError, setHasError] = useState(false);
-<<<<<<< Updated upstream
-
-  let texture;
-  try {
-    texture = useLoader(TextureLoader, aftonbladetImg);
-  } catch (error) {
-    console.error("Error loading texture:", error);
-    setHasError(true);
-  }
-
-  return (
-    <mesh {...props}>
-      <planeGeometry args={[1, 0.6]} />
-      {!hasError ? (
-        <meshBasicMaterial map={texture} transparent />
-      ) : (
-        <meshBasicMaterial color="#4285F4" transparent />
-=======
   const [texture, setTexture] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const materialRef = useRef();
@@ -168,7 +146,6 @@ const ImagePlane = (props) => {
           opacity={0.9}
           depthTest={false}
         />
->>>>>>> Stashed changes
       )}
     </mesh>
   );

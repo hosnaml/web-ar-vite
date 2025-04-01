@@ -5,14 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-<<<<<<< Updated upstream
-    allowedHosts: ['sight-begin-donation-turned.trycloudflare.com']
-=======
     allowedHosts: ['cable-scenarios-deaf-obituaries.trycloudflare.com'],
     cors: true // Enable CORS for development
   },
   build: {
     assetsInlineLimit: 0 // Ensure images are processed as assets rather than inlined
->>>>>>> Stashed changes
   }
 })

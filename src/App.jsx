@@ -6,12 +6,8 @@ import ImagePlane from "./components/ImagePlane";
 import ARButton from "./components/ARButton";
 import DebugOverlay from "./components/DebugOverlay";
 
-<<<<<<< Updated upstream
 // Enable debugging where needed
 const DEBUG = true;
-=======
-const DEBUG = false; // Changed from true
->>>>>>> Stashed changes
 const logDebug = (...args) => DEBUG && console.log(...args);
 
 // Detect iOS devices
@@ -234,17 +230,6 @@ export default function App() {
           <XROrigin />
           {shouldRender && (
             <Suspense fallback={null}>
-<<<<<<< Updated upstream
-              <ambientLight intensity={0.8} />
-              <directionalLight position={[5, 5, 5]} intensity={1} />
-
-              {/* Now using the imported component */}
-              <ImagePlane
-                position={[0, 0.4, -3]}
-                scale={[1.2, 6, 1]}
-                rotation={[0, 0, 0]}
-              />
-=======
               <ambientLight intensity={5.0} />
               <directionalLight position={[0, 0, -1]} intensity={5.0} />
 
@@ -262,7 +247,6 @@ export default function App() {
                 <meshBasicMaterial color="red" depthTest={false} />
               </mesh>
               */}
->>>>>>> Stashed changes
             </Suspense>
           )}
         </XR>
