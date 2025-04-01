@@ -1,11 +1,9 @@
-import { useLoader } from "@react-three/fiber";
-import { TextureLoader } from "three";
 import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import Klart from "../assets/klart.se_wo_adspng.jpg";
-// Component for rendering a textured plane with platform-specific handling
-const ImagePlane = (props) => {
+import Podme from "../assets/Podme.jpg";
+
+const PodmeImagePlane = (props) => {
   const [hasError, setHasError] = useState(false);
   const [texture, setTexture] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -73,7 +71,7 @@ const ImagePlane = (props) => {
       // Mark initial position as set
       initialPositionSet.current = true;
       console.log(
-        "ImagePlane - Initial position set with X offset:",
+        "PodmeImagePlane - Initial position set with X offset:",
         initialPosition.current,
         "X offset was:",
         xOffset
@@ -86,17 +84,18 @@ const ImagePlane = (props) => {
 
   // Universal texture loading approach that works on both platforms
   useEffect(() => {
-    console.log("Starting texture loading...");
-    console.log("Loading image from path:", Klart);
+    const componentId = "PodmeImagePlane";
+    console.log("Starting Podme texture loading...");
+    console.log("Loading image from path:", Podme);
 
     // Create a texture loader
     const textureLoader = new THREE.TextureLoader();
 
     // Load texture directly
     textureLoader.load(
-      Klart,
+      Podme,
       (loadedTexture) => {
-        console.log("Texture loaded successfully");
+        console.log("Podme texture loaded successfully");
 
         // Apply universal optimizations
         loadedTexture.minFilter = THREE.LinearFilter;
@@ -112,20 +111,19 @@ const ImagePlane = (props) => {
         if (materialRef.current) {
           materialRef.current.map = loadedTexture;
           materialRef.current.needsUpdate = true;
-          console.log("Updated material with texture");
+          console.log("Updated Podme material with texture");
         }
       },
       // Progress callback
       (xhr) => {
         console.log(
-          `Texture loading: ${(xhr.loaded / xhr.total) * 100}% loaded`
+          `Podme texture loading: ${(xhr.loaded / xhr.total) * 100}% loaded`
         );
       },
       // Error callback
       (error) => {
-        console.error("Error loading texture:", error);
+        console.error("Error loading Podme texture:", error);
         console.log("Falling back to canvas texture");
-
         // Fallback to canvas approach
         createCanvasTexture();
       }
@@ -133,7 +131,7 @@ const ImagePlane = (props) => {
   }, []);
 
   // Fallback function to create canvas texture
-  const createCanvasTexture = (componentId = "MainImagePlane") => {
+  const createCanvasTexture = () => {
     // Create a canvas element
     const canvas = document.createElement("canvas");
     canvas.width = 512;
@@ -147,8 +145,8 @@ const ImagePlane = (props) => {
       canvas.width,
       canvas.height
     );
-    gradient.addColorStop(0, "#f9c22e");
-    gradient.addColorStop(1, "#e84855");
+    gradient.addColorStop(0, "#4285f4"); // Different colors for Podme
+    gradient.addColorStop(1, "#0f9d58");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -156,7 +154,7 @@ const ImagePlane = (props) => {
     ctx.fillStyle = "white";
     ctx.font = "bold 48px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("AFTONBLADET", canvas.width / 2, canvas.height / 2);
+    ctx.fillText("PODME", canvas.width / 2, canvas.height / 2);
     ctx.font = "32px Arial";
     ctx.fillText("Web AR Demo", canvas.width / 2, canvas.height / 2 + 60);
 
@@ -168,17 +166,17 @@ const ImagePlane = (props) => {
 
     setTexture(canvasTexture);
     setLoaded(true);
-    console.log(`[${componentId}] Canvas texture created successfully`);
+    console.log("Podme canvas texture created successfully");
 
     // Add canvas to DOM for debugging if needed
     if (DEBUG) {
       canvas.style.position = "absolute";
       canvas.style.bottom = "10px";
-      canvas.style.right = "10px";
+      canvas.style.right = "100px"; // Different position from main ImagePlane
       canvas.style.width = "80px";
       canvas.style.height = "140px";
       canvas.style.zIndex = "1000";
-      canvas.style.border = "2px solid red";
+      canvas.style.border = "2px solid blue"; // Different color for identification
       document.body.appendChild(canvas);
     }
   };
@@ -206,4 +204,4 @@ const ImagePlane = (props) => {
   );
 };
 
-export default ImagePlane;
+export default PodmeImagePlane;

@@ -5,6 +5,8 @@ import "./App.css";
 import ImagePlane from "./components/ImagePlane";
 import ARButton from "./components/ARButton";
 import DebugOverlay from "./components/DebugOverlay";
+import PodmeImagePlane from "./components/PodmeImagePlane";
+import Podme2ImagePlane from "./components/Podme2ImagePlane";
 
 // Enable debugging where needed
 const DEBUG = true;
@@ -224,16 +226,13 @@ export default function App() {
           alpha: true,
           antialias: isIOSDevice,
           preserveDrawingBuffer: true,
-          clearColor: [0, 0, 0, 0], // Fully transparent clear color
-          premultipliedAlpha: false, // Critical for transparency
+          clearColor: [0, 0, 0, 0],
+          premultipliedAlpha: false,
           powerPreference: "high-performance",
         }}
         onCreated={(state) => {
-          // Set transparent background
           state.gl.setClearColor(0, 0, 0, 0);
           state.scene.background = null;
-
-          // For iOS, get proper WebGL context
           if (isIOSDevice) {
             try {
               const glContext = state.gl.getContext();
@@ -263,19 +262,28 @@ export default function App() {
               <ambientLight intensity={5.0} />
               <directionalLight position={[0, 0, -1]} intensity={5.0} />
 
-              <ImagePlane
-                position={[0, 0.7, -3.5]} // Changed Z from -1.0 to -3.5 for more distance
-                scale={[3.0, 3.0, 1]} // Increased scale to compensate for distance
-                rotation={[0, 0, 0]}
-              />
+              <group>
+                <PodmeImagePlane
+                  key="podme-left"
+                  position={[-3.0, 0.7, -3.5]}
+                  scale={[2.0, 2.0, 1]}
+                  rotation={[0, 0, 0]}
+                />
 
-              {/* Optional debug elements - uncomment if needed */}
-              {/*
-              <mesh position={[0, 0, -0.19]} scale={[0.05, 0.05, 0.05]}>
-                <sphereGeometry />
-                <meshBasicMaterial color="red" depthTest={false} />
-              </mesh>
-              */}
+                <ImagePlane
+                  key="main-center"
+                  position={[0, 0.7, -3.5]}
+                  scale={[3.0, 3.0, 1]}
+                  rotation={[0, 0, 0]}
+                />
+
+                <Podme2ImagePlane
+                  key="podme2-right"
+                  position={[3.0, 0.7, -3.5]}
+                  scale={[2.0, 2.0, 1]}
+                  rotation={[0, 0, 0]}
+                />
+              </group>
             </Suspense>
           )}
         </XR>
