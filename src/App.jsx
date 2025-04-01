@@ -209,23 +209,38 @@ export default function App() {
           alpha: true,
           antialias: isIOSDevice,
           preserveDrawingBuffer: true,
-          clearColor: [0, 0, 0, 0],
-          premultipliedAlpha: false,
+          clearColor: [0, 0, 0, 0], // Fully transparent clear color
+          premultipliedAlpha: false, // Critical for transparency
           powerPreference: "high-performance",
         }}
         onCreated={(state) => {
+          // Set transparent background
           state.gl.setClearColor(0, 0, 0, 0);
+          state.scene.background = null;
+
+          // For iOS, get proper WebGL context
           if (isIOSDevice) {
-            state.gl.clear(
-              state.gl.COLOR_BUFFER_BIT | state.gl.DEPTH_BUFFER_BIT
-            );
+            try {
+              const glContext = state.gl.getContext();
+              if (glContext) {
+                // Clear both buffers for a clean start
+                glContext.clear(
+                  glContext.COLOR_BUFFER_BIT | glContext.DEPTH_BUFFER_BIT
+                );
+                // Disable depth testing for AR
+                glContext.disable(glContext.DEPTH_TEST);
+              }
+            } catch (e) {
+              console.error("WebGL context error:", e);
+            }
           }
+
           logDebug("Canvas created");
         }}
         flat={isIOSDevice}
         legacy={isIOSDevice}
       >
-        <color attach="background" args={[0, 0, 0, 0]} />
+        {/* Don't set any color attachment here */}
         <XR store={store}>
           <XROrigin />
           {shouldRender && (
