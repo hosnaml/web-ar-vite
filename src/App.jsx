@@ -43,6 +43,7 @@ export default function App() {
   const [forceRender, setForceRender] = useState(false);
   const sessionStartTimeRef = useRef(null);
   const [isIOSDevice, setIsIOSDevice] = useState(false);
+  const [arInitializing, setARInitializing] = useState(false);
 
   // Check WebXR support once on component mount
   useEffect(() => {
@@ -120,6 +121,7 @@ export default function App() {
   // Improved enterAR function
   const enterAR = async () => {
     setLoading(true);
+    setARInitializing(true); // Set initializing state
     try {
       logDebug("Starting enterAR process");
       // Pre-warm camera with lower resolution for performance
@@ -160,6 +162,11 @@ export default function App() {
       await store.enterAR();
       logDebug("store.enterAR() completed");
 
+      // Keep AR initializing true for a brief period to show loading indicator
+      setTimeout(() => {
+        setARInitializing(false);
+      }, 1500);
+
       // Force to appear after a delay
       setTimeout(() => {
         if (!forceRender) {
@@ -170,6 +177,7 @@ export default function App() {
     } catch (error) {
       console.error("AR initialization error:", error);
       alert("Camera access is required for AR functionality");
+      setARInitializing(false);
     } finally {
       setLoading(false);
     }
@@ -201,6 +209,13 @@ export default function App() {
           forceRender={forceRender}
           isIOSDevice={isIOSDevice}
         />
+      )}
+
+      {arInitializing && (
+        <div className="ar-initializing-overlay">
+          <div className="ar-loading-spinner"></div>
+          <p>Initializing AR...</p>
+        </div>
       )}
 
       <Canvas

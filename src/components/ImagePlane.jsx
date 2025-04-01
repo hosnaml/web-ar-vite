@@ -152,3 +152,9 @@ const ImagePlane = (props) => {
 };
 
 export default ImagePlane;
+
+<ImagePlane
+  position={[0, 0, -0.2]}
+  scale={[2.0, 2.0, 1]} // Increased from [1.5, 1.5, 1]
+  rotation={[0, 0, 0]}
+/>;
