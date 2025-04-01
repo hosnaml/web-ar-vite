@@ -265,8 +265,8 @@ export default function App() {
 
               {/* Position the image closer to the camera */}
               <ImagePlane
-                position={[0, 0, -0.2]} // Moved closer to camera, centered vertically
-                scale={[1.5, 1.5, 1]} // Reduced scale to fit better in view
+                position={[0, 0.7, -1.0]} // Higher Y value and further away in Z
+                scale={[2.0, 2.0, 1]}
                 rotation={[0, 0, 0]}
               />
 

@@ -2,6 +2,7 @@ import { useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three";
 import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
+import { useFrame } from "@react-three/fiber";
 import aftonbladetImg from "../assets/www.aftonbladet.se.jpg";
 
 // Component for rendering a textured plane with platform-specific handling
@@ -23,6 +24,30 @@ const ImagePlane = (props) => {
 
   const isIOSDevice = isIOS();
   const DEBUG = true; // Enable debugging
+
+  // Add positioning logic for the image plane
+  useFrame(({ camera }) => {
+    if (!meshRef.current) return;
+
+    // Get the current camera position for reference
+    const cameraPosition = camera.position;
+
+    // Calculate a position that's in front and upward from camera
+    // Maintain z-position from props or use a default distance
+    const zDistance = props.position?.[2] || -1.0;
+
+    // Set the position to be centered but higher up
+    // This keeps the image in front but elevates it
+    meshRef.current.position.set(
+      props.position?.[0] || 0, // Keep x-position from props or default to 0
+      (props.position?.[1] || 0) + 0.5, // Add 0.5 units to y-position to raise it
+      zDistance
+    );
+
+    // Optional: make the image always face the camera (billboard effect)
+    // Uncomment the next line if you want this behavior
+    // meshRef.current.lookAt(camera.position);
+  });
 
   // Universal texture loading approach that works on both platforms
   useEffect(() => {
@@ -136,7 +161,7 @@ const ImagePlane = (props) => {
           side={THREE.DoubleSide}
           depthWrite={false}
           depthTest={false}
-          color="white" // Add white tint for visibility
+          color="white"
         />
       ) : (
         // Visible fallback while loading
@@ -152,9 +177,3 @@ const ImagePlane = (props) => {
 };
 
 export default ImagePlane;
-
-<ImagePlane
-  position={[0, 0, -0.2]}
-  scale={[2.0, 2.0, 1]} // Increased from [1.5, 1.5, 1]
-  rotation={[0, 0, 0]}
-/>;
