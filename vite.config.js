@@ -5,7 +5,12 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true,
-    allowedHosts: ["musical-public-keen-stupid.trycloudflare.com"],
+    allowedHosts: [
+      "cheque-properties-produces-illustrations.trycloudflare.com",
+    ],
+    cors: true, // Enable CORS for development
+  },
+  build: {
+    assetsInlineLimit: 0, // Ensure images are processed as assets rather than inlined
   },
 });
