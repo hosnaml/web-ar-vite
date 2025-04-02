@@ -1,11 +1,9 @@
-import { useLoader } from "@react-three/fiber";
-import { TextureLoader } from "three";
 import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import Klart from "../assets/klart.se_wo_adspng.jpg";
-// Component for rendering a textured plane with platform-specific handling
-const ImagePlane = ({ scrollOffset = 0, ...props }) => {
+import Podme from "../assets/Podme.jpg";
+
+const PodmeImagePlane = (props) => {
   const [hasError, setHasError] = useState(false);
   const [texture, setTexture] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -28,12 +26,6 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
   const isIOSDevice = isIOS();
   const DEBUG = true; // Enable debugging
 
-  // Re-create texture every time scrollOffset changes
-  useEffect(() => {
-    createCanvasTexture();
-  }, [scrollOffset]);
-
-  // Modified positioning logic to stay fixed at initial position - with increased distance
   // Modified positioning logic to stay fixed in world space while respecting X offset from props
   useFrame(({ camera }) => {
     if (!meshRef.current) return;
@@ -79,7 +71,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
       // Mark initial position as set
       initialPositionSet.current = true;
       console.log(
-        "ImagePlane - Initial position set with X offset:",
+        "PodmeImagePlane - Initial position set with X offset:",
         initialPosition.current,
         "X offset was:",
         xOffset
@@ -92,17 +84,18 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
 
   // Universal texture loading approach that works on both platforms
   useEffect(() => {
-    console.log("Starting texture loading...");
-    console.log("Loading image from path:", Klart);
+    const componentId = "PodmeImagePlane";
+    console.log("Starting Podme texture loading...");
+    console.log("Loading image from path:", Podme);
 
     // Create a texture loader
     const textureLoader = new THREE.TextureLoader();
 
     // Load texture directly
     textureLoader.load(
-      Klart,
+      Podme,
       (loadedTexture) => {
-        console.log("Texture loaded successfully");
+        console.log("Podme texture loaded successfully");
 
         // Apply universal optimizations
         loadedTexture.minFilter = THREE.LinearFilter;
@@ -118,73 +111,42 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
         if (materialRef.current) {
           materialRef.current.map = loadedTexture;
           materialRef.current.needsUpdate = true;
-          console.log("Updated material with texture");
+          console.log("Updated Podme material with texture");
         }
       },
       // Progress callback
       (xhr) => {
         console.log(
-          `Texture loading: ${(xhr.loaded / xhr.total) * 100}% loaded`
+          `Podme texture loading: ${(xhr.loaded / xhr.total) * 100}% loaded`
         );
       },
       // Error callback
       (error) => {
-        console.error("Error loading texture:", error);
+        console.error("Error loading Podme texture:", error);
         console.log("Falling back to canvas texture");
-
         // Fallback to canvas approach
+        createCanvasTexture();
       }
     );
   }, []);
 
   // Fallback function to create canvas texture
-  const createCanvasTexture = (componentId = "MainImagePlane") => {
+  const createCanvasTexture = () => {
     // Create a canvas element
     const canvas = document.createElement("canvas");
     canvas.width = 512;
     canvas.height = 896; // Reduced size for performance
     const ctx = canvas.getContext("2d");
 
-    const img = new Image();
-    img.src = Klart;
-
-    img.onload = () => {
-      const visibleHeight = canvas.height;
-      const maxScroll = img.height - visibleHeight;
-      const yOffset = scrollOffset * maxScroll;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(
-        img,
-        0, // source x
-        yOffset, // source y (start crop vertically)
-        img.width, // source width
-        visibleHeight, // source height to draw
-        0, // dest x
-        0, // dest y
-        canvas.width, // dest width
-        canvas.height // dest height
-      );
-
-      const newTexture = new THREE.CanvasTexture(canvas);
-      newTexture.needsUpdate = true;
-      newTexture.minFilter = THREE.LinearFilter;
-      newTexture.magFilter = THREE.LinearFilter;
-
-      console.log("Texture updated with cropped canvas");
-      setTexture(newTexture);
-    };
-  };
-
-  // Fill with a bright color so we can see it
-  /*const gradient = ctx.createLinearGradient(
+    // Fill with a bright color so we can see it
+    const gradient = ctx.createLinearGradient(
       0,
       0,
       canvas.width,
       canvas.height
     );
-    gradient.addColorStop(0, "#f9c22e");
-    gradient.addColorStop(1, "#e84855");
+    gradient.addColorStop(0, "#4285f4"); // Different colors for Podme
+    gradient.addColorStop(1, "#0f9d58");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -192,7 +154,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
     ctx.fillStyle = "white";
     ctx.font = "bold 48px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("AFTONBLADET", canvas.width / 2, canvas.height / 2);
+    ctx.fillText("PODME", canvas.width / 2, canvas.height / 2);
     ctx.font = "32px Arial";
     ctx.fillText("Web AR Demo", canvas.width / 2, canvas.height / 2 + 60);
 
@@ -204,21 +166,20 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
 
     setTexture(canvasTexture);
     setLoaded(true);
-    console.log(`[${componentId}] Canvas texture created successfully`);
+    console.log("Podme canvas texture created successfully");
 
     // Add canvas to DOM for debugging if needed
     if (DEBUG) {
       canvas.style.position = "absolute";
       canvas.style.bottom = "10px";
-      canvas.style.right = "10px";
+      canvas.style.right = "100px"; // Different position from main ImagePlane
       canvas.style.width = "80px";
       canvas.style.height = "140px";
       canvas.style.zIndex = "1000";
-      canvas.style.border = "2px solid red";
+      canvas.style.border = "2px solid blue"; // Different color for identification
       document.body.appendChild(canvas);
     }
   };
-*/
 
   // Alternative approach - don't render anything until loaded
   return (
@@ -243,4 +204,4 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
   );
 };
 
-export default ImagePlane;
+export default PodmeImagePlane;
