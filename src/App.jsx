@@ -14,7 +14,7 @@ const logDebug = (...args) => DEBUG && console.log(...args);
 const isIOS = () => {
   return (
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator === "MacIntel" && navigator.maxTouchPoints > 1)
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
   );
 };
 
@@ -49,6 +49,35 @@ export default function App() {
   const sessionStartTimeRef = useRef(null);
   const [isIOSDevice, setIsIOSDevice] = useState(false);
   const [arInitializing, setARInitializing] = useState(false);
+
+  useEffect(() => {
+    let touchStartY = null;
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length === 1) {
+        touchStartY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length === 1 && touchStartY !== null) {
+        const deltaY = touchStartY - e.touches[0].clientY;
+        setScrollY((prev) => {
+          let next = prev + deltaY * 0.002; // Adjust sensitivity if needed
+          return Math.min(1, Math.max(0, next)); // Clamp between 0 and 1
+        });
+        touchStartY = e.touches[0].clientY;
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchmove", handleTouchMove);
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, []);
 
   // Check WebXR support once on component mount
   useEffect(() => {
@@ -268,10 +297,10 @@ export default function App() {
               <ambientLight intensity={5.0} />
               <directionalLight position={[0, 0, -1]} intensity={5.0} />
 
-              {/* Position the image closer to the camera */}
               <ImagePlane
-                position={[-1, 0, -3.0]} // Higher Y value and further away in Z
-                scale={[1.0, 2.0, 1]}
+                scrollOffset={scrollY}
+                position={[1, 0.3, -5]} // Changed Z from -1.0 to -3.5 for more distance
+                scale={[3.0, 3, 1]} // Increased scale to compensate for distance
                 rotation={[0, 0, 0]}
               />
 

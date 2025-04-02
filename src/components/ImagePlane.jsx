@@ -6,12 +6,16 @@ import { useFrame } from "@react-three/fiber";
 import aftonbladetImg from "../assets/www.aftonbladet.se.jpg";
 
 // Component for rendering a textured plane with platform-specific handling
-const ImagePlane = (props) => {
+const ImagePlane = ({ scrollOffset = 0, ...props }) => {
   const [hasError, setHasError] = useState(false);
   const [texture, setTexture] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const materialRef = useRef();
   const meshRef = useRef();
+
+  // Add state to track initial positioning
+  const initialPositionSet = useRef(false);
+  const initialPosition = useRef(new THREE.Vector3());
 
   // Check if device is iOS
   const isIOS = () => {
@@ -25,28 +29,58 @@ const ImagePlane = (props) => {
   const isIOSDevice = isIOS();
   const DEBUG = true; // Enable debugging
 
-  // Add positioning logic for the image plane
+  // Re-create texture every time scrollOffset changes
+  useEffect(() => {
+    createCanvasTexture();
+  }, [scrollOffset]);
+
+  // Modified positioning logic to stay fixed at initial position - with increased distance
   useFrame(({ camera }) => {
     if (!meshRef.current) return;
 
-    // Get the current camera position for reference
-    const cameraPosition = camera.position;
+    // If initial position hasn't been set yet, set it once
+    if (!initialPositionSet.current) {
+      // Get the current camera position and direction
+      const cameraPosition = camera.position;
+      const cameraDirection = new THREE.Vector3(0, 0, -1);
+      cameraDirection.applyQuaternion(camera.quaternion);
 
-    // Calculate a position that's in front and upward from camera
-    // Maintain z-position from props or use a default distance
-    const zDistance = props.position?.[2] || -1.0;
+      // Calculate initial position that's directly in front
+      // Increased distance from 2 meters to 3.5 meters
+      const zDistance = props.position?.[2] || -3.5; // 3.5 meters in front
 
-    // Set the position to be centered but higher up
-    // This keeps the image in front but elevates it
-    meshRef.current.position.set(
-      props.position?.[0] || 0, // Keep x-position from props or default to 0
-      (props.position?.[1] || 0) + 0.5, // Add 0.5 units to y-position to raise it
-      zDistance
-    );
+      const forwardOffset = cameraDirection
+        .clone()
+        .multiplyScalar(Math.abs(zDistance));
 
-    // Optional: make the image always face the camera (billboard effect)
-    // Uncomment the next line if you want this behavior
-    // meshRef.current.lookAt(camera.position);
+      // Set initial position
+      initialPosition.current.set(
+        cameraPosition.x + forwardOffset.x,
+        // Increased height to position at eye level + 0.5 meters
+        cameraPosition.y + 0.5, // Higher above eye level for better visibility
+        cameraPosition.z + forwardOffset.z
+      );
+
+      // Move mesh to initial position
+      meshRef.current.position.copy(initialPosition.current);
+
+      // Scale up the image to compensate for farther distance
+      // Only adjust scale if it wasn't explicitly set in props
+      if (!props.scale) {
+        // Make it larger since it's further away
+        meshRef.current.scale.set(3.0, 3.0, 1);
+      }
+
+      // Mark initial position as set
+      initialPositionSet.current = true;
+      console.log(
+        "Initial position set (increased distance):",
+        initialPosition.current
+      );
+    }
+
+    // Always make the image face the camera, even though position is fixed
+    meshRef.current.lookAt(camera.position);
   });
 
   // Universal texture loading approach that works on both platforms
@@ -92,21 +126,51 @@ const ImagePlane = (props) => {
         console.log("Falling back to canvas texture");
 
         // Fallback to canvas approach
-        createCanvasTexture();
       }
     );
   }, []);
 
   // Fallback function to create canvas texture
   const createCanvasTexture = () => {
-    // Create a canvas element
+    // Create a canvas element based on scroll offset
     const canvas = document.createElement("canvas");
     canvas.width = 512;
     canvas.height = 896; // Reduced size for performance
     const ctx = canvas.getContext("2d");
 
-    // Fill with a bright color so we can see it
-    const gradient = ctx.createLinearGradient(
+    const img = new Image();
+    img.src = aftonbladetImg;
+
+    img.onload = () => {
+      const visibleHeight = canvas.height;
+      const maxScroll = img.height - visibleHeight;
+      const yOffset = scrollOffset * maxScroll;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(
+        img,
+        0, // source x
+        yOffset, // source y (start crop vertically)
+        img.width, // source width
+        visibleHeight, // source height to draw
+        0, // dest x
+        0, // dest y
+        canvas.width, // dest width
+        canvas.height // dest height
+      );
+
+      const newTexture = new THREE.CanvasTexture(canvas);
+      newTexture.needsUpdate = true;
+      newTexture.minFilter = THREE.LinearFilter;
+      newTexture.magFilter = THREE.LinearFilter;
+
+      console.log("Texture updated with cropped canvas");
+      setTexture(newTexture);
+    };
+  };
+
+  // Fill with a bright color so we can see it
+  /*const gradient = ctx.createLinearGradient(
       0,
       0,
       canvas.width,
@@ -147,7 +211,7 @@ const ImagePlane = (props) => {
       document.body.appendChild(canvas);
     }
   };
-
+*/
   return (
     <mesh ref={meshRef} {...props}>
       <planeGeometry args={[1, 1.7]} />
@@ -156,9 +220,9 @@ const ImagePlane = (props) => {
           ref={materialRef}
           map={texture}
           transparent={true}
-          opacity={1.0}
+          opacity={0.85}
           alphaTest={0.1}
-          side={THREE.DoubleSide}
+          side={THREE.DoubleSide} // Show image from both sides
           depthWrite={false}
           depthTest={false}
           color="white"

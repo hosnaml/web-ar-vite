@@ -5,9 +5,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts: [
-      "cheque-properties-produces-illustrations.trycloudflare.com",
-    ],
+    allowedHosts: ["organ-audio-orientation-occupations.trycloudflare.com"],
     cors: true, // Enable CORS for development
   },
   build: {
