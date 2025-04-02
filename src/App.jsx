@@ -321,7 +321,7 @@ export default function App() {
                 <Podme2ImagePlane
                   key="podme2-right"
                   position={[3.0, 0.7, -3.5]}
-                  scale={[2.0, 2.0, 1]}
+                  scale={[2.0, 0.5, 1]}
                   rotation={[0, 0, 0]}
                 />
               </group>
