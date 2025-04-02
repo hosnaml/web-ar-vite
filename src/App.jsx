@@ -7,6 +7,7 @@ import ARButton from "./components/ARButton";
 import DebugOverlay from "./components/DebugOverlay";
 import PodmeImagePlane from "./components/PodmeImagePlane";
 import Podme2ImagePlane from "./components/Podme2ImagePlane";
+import { Handle, HandleTarget } from "@react-three/handle";
 
 // Enable debugging where needed
 const DEBUG = true;
@@ -303,14 +304,37 @@ export default function App() {
                   scale={[2.0, 2.0, 1]}
                   rotation={[0, 0, 0]}
                 />
-
-                <ImagePlane
-                  scrollOffset={scrollY}
-                  key="main-center"
-                  position={[1, 0.3, -5]} // Changed Z from -1.0 to -3.5 for more distance
-                  scale={[3.0, 3, 1]} // Increased scale to compensate for distance
-                  rotation={[0, 0, 0]}
-                />
+                <HandleTarget>
+                  <ImagePlane
+                    key="main-center"
+                    position={[1, 0.3, -5]} // Changed Z from -1.0 to -3.5 for more distance
+                    scale={[3.0, 3, 1]} // Increased scale to compensate for distance
+                    rotation={[0, 0, 0]}
+                  />
+                  <Handle
+                    targetRef="from-context"
+                    translate="y"
+                    onUpdate={({ translation }) => {
+                      // Update scrollY based on Y-axis movement (scaled and clamped)
+                      setScrollY((prev) => {
+                        const updated = prev - translation.y * 0.2; // You can adjust 0.2 for sensitivity
+                        return Math.min(1, Math.max(0, updated));
+                      });
+                    }}
+                  >
+                    {/* Invisible grab box */}
+                    <mesh position={[1, 0.3, -4.98]}>
+                      {" "}
+                      // slightly in front of the plane
+                      <boxGeometry args={[2, 3, 0.05]} />
+                      <meshBasicMaterial
+                        color="orange"
+                        transparent
+                        opacity={0.3}
+                      />
+                    </mesh>
+                  </Handle>
+                </HandleTarget>
 
                 <Podme2ImagePlane
                   key="podme2-right"
