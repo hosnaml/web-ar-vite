@@ -3,7 +3,6 @@ import { TextureLoader } from "three";
 import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import Klart from "../assets/klart.se_wo_adspng.jpg";
 import cleanWebsite from "../assets/cleanWebsite.png";
 
 // Component for rendering a textured plane with platform-specific handling
@@ -33,7 +32,11 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
   // Re-create texture every time scrollOffset changes
   useEffect(() => {
     createCanvasTexture(scrollOffset);
-  }, [scrollOffset]);
+  }, []); // Run on mount
+
+  useEffect(() => {
+    if (loaded) createCanvasTexture(scrollOffset);
+  }, [scrollOffset]); // Re-run when scroll changes after initial load
 
   // Modified positioning logic to stay fixed at initial position - with increased distance
   // Modified positioning logic to stay fixed in world space while respecting X offset from props
@@ -141,11 +144,10 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
 
   // Fallback function to create canvas texture
   const createCanvasTexture = (componentId = "MainImagePlane") => {
-    // Create a canvas element
     const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 896; // Reduced size for performance
-    const ctx = canvas.getContext("2d");
+    canvas.width = isIOSDevice ? 256 : 512;
+    canvas.height = isIOSDevice ? 448 : 896;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true }); // Optimize context
 
     const img = new Image();
     img.src = cleanWebsite;
@@ -153,7 +155,16 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
     img.onload = () => {
       const visibleHeight = canvas.height;
       const maxScroll = img.height - visibleHeight;
-      const yOffset = scrollOffset * maxScroll;
+      const yOffset = Math.min(
+        maxScroll,
+        Math.max(0, scrollOffset * maxScroll)
+      );
+
+      // iOS-specific optimization
+      if (isIOSDevice) {
+        ctx.save();
+        ctx.imageSmoothingQuality = "high"; // This helps on iOS
+      }
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(
@@ -168,59 +179,18 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
         canvas.height // dest height
       );
 
+      if (isIOSDevice) ctx.restore();
+
       const newTexture = new THREE.CanvasTexture(canvas);
       newTexture.needsUpdate = true;
       newTexture.minFilter = THREE.LinearFilter;
       newTexture.magFilter = THREE.LinearFilter;
+      newTexture.anisotropy = 1; // Lower for iOS performance
 
       console.log("Texture updated with cropped canvas");
       setTexture(newTexture);
     };
   };
-
-  // Fill with a bright color so we can see it
-  /*const gradient = ctx.createLinearGradient(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-    gradient.addColorStop(0, "#f9c22e");
-    gradient.addColorStop(1, "#e84855");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Add some text to ensure we see something
-    ctx.fillStyle = "white";
-    ctx.font = "bold 48px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("AFTONBLADET", canvas.width / 2, canvas.height / 2);
-    ctx.font = "32px Arial";
-    ctx.fillText("Web AR Demo", canvas.width / 2, canvas.height / 2 + 60);
-
-    // Create texture from canvas
-    const canvasTexture = new THREE.CanvasTexture(canvas);
-    canvasTexture.needsUpdate = true;
-    canvasTexture.minFilter = THREE.LinearFilter;
-    canvasTexture.magFilter = THREE.LinearFilter;
-
-    setTexture(canvasTexture);
-    setLoaded(true);
-    console.log(`[${componentId}] Canvas texture created successfully`);
-
-    // Add canvas to DOM for debugging if needed
-    if (DEBUG) {
-      canvas.style.position = "absolute";
-      canvas.style.bottom = "10px";
-      canvas.style.right = "10px";
-      canvas.style.width = "80px";
-      canvas.style.height = "140px";
-      canvas.style.zIndex = "1000";
-      canvas.style.border = "2px solid red";
-      document.body.appendChild(canvas);
-    }
-  };
-*/
 
   // Alternative approach - don't render anything until loaded
   return (
@@ -232,11 +202,11 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
             ref={materialRef}
             map={texture}
             transparent={true}
-            opacity={1.0}
+            opacity={0.9} // Slightly reduce opacity to ensure camera shows through
             alphaTest={0.1}
             side={THREE.DoubleSide}
-            depthWrite={false}
-            depthTest={false}
+            depthWrite={false} // Change to false to prevent blocking camera
+            depthTest={true}
             color="white"
           />
         </mesh>
