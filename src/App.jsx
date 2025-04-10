@@ -7,6 +7,7 @@ import ARButton from "./components/ARButton";
 import DebugOverlay from "./components/DebugOverlay";
 import PodmeImagePlane from "./components/PodmeImagePlane";
 import Podme2ImagePlane from "./components/Podme2ImagePlane";
+import BenzAd from "./components/benzAd";
 
 // Enable debugging where needed
 const DEBUG = true;
@@ -303,26 +304,36 @@ export default function App() {
               <directionalLight position={[0, 0, -1]} intensity={5.0} />
 
               <group>
-                <PodmeImagePlane
+                {/* <PodmeImagePlane
                   key="podme-left"
                   position={[-3.0, 0.7, -3.5]}
                   scale={[2.0, 2.0, 1]}
                   rotation={[0, 0, 0]}
-                />
+                /> */}
 
                 <ImagePlane
                   scrollOffset={scrollY}
                   key="main-center"
-                  position={[1, 0.3, -5]} // Changed Z from -1.0 to -3.5 for more distance
-                  scale={[3.0, 3, 1]} // Increased scale to compensate for distance
+                  position={[0, 0.7, -3.5]}
+                  scale={[3.0, 3.0, 1]}
                   rotation={[0, 0, 0]}
                 />
 
                 <Podme2ImagePlane
                   key="podme2-right"
                   position={[3.0, 0.7, -3.5]}
-                  scale={[2.0, 0.5, 1]}
+                  scale={[2.0, 2.0, 1]}
                   rotation={[0, 0, 0]}
+                />
+
+                <BenzAd
+                  key="benz-model"
+                  position={[-3.0, 0.0, -3.5]}
+                  scale={[0.8, 0.8, 0.8]}
+                  text="Mercedes-Benz" // Text to display
+                  textColor="#ffffff" // White color
+                  fontSize={0.2} // Text size
+                  rotationSpeed={0.2} // Slower rotation
                 />
               </group>
             </Suspense>
