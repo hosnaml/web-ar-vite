@@ -314,8 +314,8 @@ export default function App() {
                 <ImagePlane
                   scrollOffset={scrollY}
                   key="main-center"
-                  position={[0, 0.7, -3.5]}
-                  scale={[3.0, 3.0, 1]}
+                  position={[0, 0.8, -5]}
+                  scale={[3.0, 4.0, 1]}
                   rotation={[0, 0, 0]}
                 />
 
