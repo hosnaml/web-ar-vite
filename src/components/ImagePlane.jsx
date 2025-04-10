@@ -30,7 +30,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
 
   // Re-create texture every time scrollOffset changes
   useEffect(() => {
-    createCanvasTexture();
+    createCanvasTexture(scrollOffset);
   }, [scrollOffset]);
 
   // Modified positioning logic to stay fixed at initial position - with increased distance
@@ -138,7 +138,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
   }, []);
 
   // Fallback function to create canvas texture
-  const createCanvasTexture = (componentId = "MainImagePlane") => {
+  const createCanvasTexture = (scrollOffset) => {
     // Create a canvas element
     const canvas = document.createElement("canvas");
     canvas.width = 512;

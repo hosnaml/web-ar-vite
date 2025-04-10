@@ -5,7 +5,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts: ["organ-audio-orientation-occupations.trycloudflare.com"],
+    allowedHosts: ["poverty-lookup-cells-complete.trycloudflare.com"],
     cors: true, // Enable CORS for development
   },
   build: {
