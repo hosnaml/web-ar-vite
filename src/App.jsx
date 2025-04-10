@@ -1,15 +1,14 @@
 import { Canvas } from "@react-three/fiber";
 import { createXRStore, XR, XROrigin } from "@react-three/xr";
 import { useState, useEffect, useRef, Suspense } from "react";
+import * as THREE from "three"; // Add THREE import
 import "./App.css";
 import ImagePlane from "./components/ImagePlane";
 import ARButton from "./components/ARButton";
 import DebugOverlay from "./components/DebugOverlay";
-import PodmeImagePlane from "./components/PodmeImagePlane";
-import Podme2ImagePlane from "./components/Podme2ImagePlane";
 import BenzAd from "./components/benzAd";
+import FantaAd from "./components/FantaAd";
 
-// Enable debugging where needed
 const DEBUG = true;
 const logDebug = (...args) => DEBUG && console.log(...args);
 
@@ -32,7 +31,6 @@ const store = createXRStore({
     logDebug("XR session ended");
     window.xrSessionActive = false;
   },
-  //requiredFeatures: ["camera"],
   optionalFeatures: [
     "camera",
     "dom-overlay",
@@ -41,8 +39,15 @@ const store = createXRStore({
     "hand-tracking",
   ],
   domOverlay: { root: document.body },
-  blendMode: "alpha-blend",
+  blendMode: "alpha-blend", // This ensures proper camera background
   environmentBlendMode: "alpha-blend",
+  referenceSpaceType: "local-floor",
+  sessionInit: {
+    depthSensing: {
+      usagePreference: ["none"],
+      dataFormatPreference: ["luminance-alpha"],
+    },
+  },
 });
 
 export default function App() {
@@ -60,33 +65,154 @@ export default function App() {
   const [arInitializing, setARInitializing] = useState(false);
 
   useEffect(() => {
+    // References for tracking touch positions
     let touchStartY = null;
+    let lastScrollY = scrollY;
 
+    // 1. Create handlers with proper event prevention for iOS
     const handleTouchStart = (e) => {
-      if (e.touches.length === 1) {
+      if (isIOSDevice && sessionActive) {
+        e.preventDefault(); // Critical for iOS during WebXR
+        e.stopPropagation();
+      }
+
+      if (e.touches && e.touches.length === 1) {
         touchStartY = e.touches[0].clientY;
+        lastScrollY = scrollY; // Store current scroll position
+
+        if (DEBUG) console.log("Touch start at:", touchStartY);
       }
     };
 
     const handleTouchMove = (e) => {
-      if (e.touches.length === 1 && touchStartY !== null) {
-        const deltaY = touchStartY - e.touches[0].clientY;
+      if (isIOSDevice && sessionActive) {
+        e.preventDefault(); // Critical for iOS during WebXR
+        e.stopPropagation();
+      }
+
+      if (e.touches && e.touches.length === 1 && touchStartY !== null) {
+        const currentY = e.touches[0].clientY;
+        const deltaY = touchStartY - currentY;
+
+        // Use different sensitivity based on device and XR state
+        const sensitivity = isIOSDevice
+          ? sessionActive
+            ? 0.01
+            : 0.004 // iOS needs different sensitivity in XR mode
+          : 0.002; // Default sensitivity for Android
+
         setScrollY((prev) => {
-          let next = prev + deltaY * 0.002; // Adjust sensitivity if needed
-          return Math.min(1, Math.max(0, next)); // Clamp between 0 and 1
+          // Calculate new scroll position with improved smoothing
+          const next = lastScrollY + deltaY * sensitivity;
+          // Clamp between 0 and 1
+          const clamped = Math.min(1, Math.max(0, next));
+
+          if (DEBUG && Math.abs(prev - clamped) > 0.01) {
+            console.log(
+              `Scroll updated: ${prev.toFixed(2)} -> ${clamped.toFixed(
+                2
+              )}, delta: ${deltaY}`
+            );
+          }
+
+          return clamped;
         });
-        touchStartY = e.touches[0].clientY;
+
+        // Don't update touchStartY here to prevent acceleration
       }
     };
 
-    window.addEventListener("touchstart", handleTouchStart);
-    window.addEventListener("touchmove", handleTouchMove);
+    const handleTouchEnd = (e) => {
+      if (isIOSDevice && sessionActive) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
 
-    return () => {
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
+      // Reset the touch tracking
+      touchStartY = null;
+      lastScrollY = scrollY;
+      if (DEBUG) console.log("Touch ended, final scroll:", scrollY.toFixed(2));
     };
-  }, []);
+
+    // 2. Target the DOM overlay element directly - CRITICAL for iOS WebXR
+    const domOverlayElement = document.body; // Must match your store config
+
+    // 3. Use proper event options for iOS
+    const eventOptions = { passive: false, capture: true };
+
+    // 4. Add event listeners with proper options
+    domOverlayElement.addEventListener(
+      "touchstart",
+      handleTouchStart,
+      eventOptions
+    );
+    domOverlayElement.addEventListener(
+      "touchmove",
+      handleTouchMove,
+      eventOptions
+    );
+    domOverlayElement.addEventListener(
+      "touchend",
+      handleTouchEnd,
+      eventOptions
+    );
+    domOverlayElement.addEventListener(
+      "touchcancel",
+      handleTouchEnd,
+      eventOptions
+    );
+
+    // Also add to window as fallback (won't hurt, but may not help on iOS during XR)
+    window.addEventListener(
+      "touchstart",
+      handleTouchStart,
+      isIOSDevice ? eventOptions : undefined
+    );
+    window.addEventListener(
+      "touchmove",
+      handleTouchMove,
+      isIOSDevice ? eventOptions : undefined
+    );
+    window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("touchcancel", handleTouchEnd);
+
+    // 5. Cleanup properly
+    return () => {
+      domOverlayElement.removeEventListener(
+        "touchstart",
+        handleTouchStart,
+        eventOptions
+      );
+      domOverlayElement.removeEventListener(
+        "touchmove",
+        handleTouchMove,
+        eventOptions
+      );
+      domOverlayElement.removeEventListener(
+        "touchend",
+        handleTouchEnd,
+        eventOptions
+      );
+      domOverlayElement.removeEventListener(
+        "touchcancel",
+        handleTouchEnd,
+        eventOptions
+      );
+
+      window.removeEventListener(
+        "touchstart",
+        handleTouchStart,
+        isIOSDevice ? eventOptions : undefined
+      );
+      window.removeEventListener(
+        "touchmove",
+        handleTouchMove,
+        isIOSDevice ? eventOptions : undefined
+      );
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
+    };
+  }, [isIOSDevice, sessionActive, scrollY]);
 
   // Check WebXR support once on component mount
   useEffect(() => {
@@ -237,6 +363,18 @@ export default function App() {
       className={`ar-container ${DEBUG ? "debug-border" : ""} ${
         isIOSDevice ? "ios-device" : ""
       }`}
+      // Direct handlers on the container element for better iOS support
+      onTouchStart={(e) => {
+        if (isIOSDevice && sessionActive) {
+          e.stopPropagation();
+        }
+      }}
+      onTouchMove={(e) => {
+        if (isIOSDevice && sessionActive) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
     >
       <ARButton
         onClick={enterAR}
@@ -270,10 +408,16 @@ export default function App() {
           clearColor: [0, 0, 0, 0],
           premultipliedAlpha: false,
           powerPreference: "high-performance",
+          // Add this parameter to ensure WebXR renders correctly
+          xrCompatible: true,
         }}
+        // Make sure scene is transparent
         onCreated={(state) => {
           state.gl.setClearColor(0, 0, 0, 0);
           state.scene.background = null;
+          // Ensure proper clear flags
+          state.gl.autoClear = false;
+
           if (isIOSDevice) {
             try {
               const glContext = state.gl.getContext();
@@ -282,15 +426,15 @@ export default function App() {
                 glContext.clear(
                   glContext.COLOR_BUFFER_BIT | glContext.DEPTH_BUFFER_BIT
                 );
-                // Disable depth testing for AR
-                glContext.disable(glContext.DEPTH_TEST);
+                // Instead of disabling depth, configure it properly
+                glContext.depthFunc(glContext.LEQUAL);
               }
             } catch (e) {
               console.error("WebGL context error:", e);
             }
           }
 
-          logDebug("Canvas created");
+          logDebug("Canvas created with transparent settings");
         }}
         flat={isIOSDevice}
         legacy={isIOSDevice}
@@ -304,13 +448,6 @@ export default function App() {
               <directionalLight position={[0, 0, -1]} intensity={5.0} />
 
               <group>
-                {/* <PodmeImagePlane
-                  key="podme-left"
-                  position={[-3.0, 0.7, -3.5]}
-                  scale={[2.0, 2.0, 1]}
-                  rotation={[0, 0, 0]}
-                /> */}
-
                 <ImagePlane
                   scrollOffset={scrollY}
                   key="main-center"
@@ -319,21 +456,26 @@ export default function App() {
                   rotation={[0, 0, 0]}
                 />
 
-                <Podme2ImagePlane
-                  key="podme2-right"
-                  position={[3.0, 0.7, -3.5]}
-                  scale={[2.0, 2.0, 1]}
-                  rotation={[0, 0, 0]}
-                />
-
+                {/* BenzAd on the left side */}
                 <BenzAd
                   key="benz-model"
                   position={[-3.0, 0.0, -3.5]}
                   scale={[0.8, 0.8, 0.8]}
-                  text="Mercedes-Benz" // Text to display
-                  textColor="#ffffff" // White color
-                  fontSize={0.2} // Text size
-                  rotationSpeed={0.2} // Slower rotation
+                  text="Mercedes-Benz"
+                  textColor="#ffffff"
+                  fontSize={0.2}
+                  rotationSpeed={0.2}
+                />
+
+                {/* FantaAd on the right side */}
+                <FantaAd
+                  key="fanta-model"
+                  position={[3.0, 0.0, -3.5]}
+                  scale={[0.7, 0.7, 0.7]}
+                  text="Fanta"
+                  textColor="#ff6600"
+                  fontSize={0.2}
+                  rotationSpeed={0.3}
                 />
               </group>
             </Suspense>

@@ -7,7 +7,7 @@ export default defineConfig({
   publicDir: 'public',
   plugins: [react()],
   server: {
-    allowedHosts: ["div-sporting-arg-philip.trycloudflare.com"],
+    allowedHosts: ["export-pharmacy-karaoke-deposits.trycloudflare.com"],
     cors: true, // Enable CORS for development
   },
   build: {
