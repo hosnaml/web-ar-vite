@@ -3,7 +3,6 @@ import { TextureLoader } from "three";
 import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import Klart from "../assets/klart.se_wo_adspng.jpg";
 import cleanWebsite from "../assets/cleanWebsite.png";
 
 // Component for rendering a textured plane with platform-specific handling
