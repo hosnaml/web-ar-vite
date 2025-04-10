@@ -94,7 +94,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
     // ONLY rotate to face camera, but don't follow camera position
     meshRef.current.lookAt(camera.position);
   });
-
+  /*
   // Universal texture loading approach that works on both platforms
   useEffect(() => {
     console.log("Starting texture loading...");
@@ -140,7 +140,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
         // Fallback to canvas approach
       }
     );
-  }, []);
+  }, []); */
 
   // Fallback function to create canvas texture
   const createCanvasTexture = (componentId = "MainImagePlane") => {
@@ -150,7 +150,8 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
     const ctx = canvas.getContext("2d", { willReadFrequently: true }); // Optimize context
 
     const img = new Image();
-    img.src = cleanWebsite;
+    img.crossOrigin = "anonymous";
+    img.src = cleanWebsite?.src || cleanWebsite;
 
     img.onload = () => {
       const visibleHeight = canvas.height;
@@ -189,6 +190,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
 
       console.log("Texture updated with cropped canvas");
       setTexture(newTexture);
+      setLoaded(true);
     };
   };
 
@@ -202,7 +204,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
             ref={materialRef}
             map={texture}
             transparent={true}
-            opacity={0.9} // Slightly reduce opacity to ensure camera shows through
+            opacity={1} // Slightly reduce opacity to ensure camera shows through
             alphaTest={0.1}
             side={THREE.DoubleSide}
             depthWrite={false} // Change to false to prevent blocking camera

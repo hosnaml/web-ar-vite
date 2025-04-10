@@ -97,9 +97,9 @@ export default function App() {
         // Use different sensitivity based on device and XR state
         const sensitivity = isIOSDevice
           ? sessionActive
-            ? 0.01
-            : 0.004 // iOS needs different sensitivity in XR mode
-          : 0.002; // Default sensitivity for Android
+            ? 0.02
+            : 0.01 // iOS needs different sensitivity in XR mode
+          : 0.01; // Default sensitivity for Android
 
         setScrollY((prev) => {
           // Calculate new scroll position with improved smoothing
