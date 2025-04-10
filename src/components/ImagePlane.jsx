@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import Klart from "../assets/klart.se_wo_adspng.jpg";
+import cleanWebsite from "../assets/cleanWebsite.png";
+
 // Component for rendering a textured plane with platform-specific handling
 const ImagePlane = ({ scrollOffset = 0, ...props }) => {
   const [hasError, setHasError] = useState(false);
@@ -30,7 +32,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
 
   // Re-create texture every time scrollOffset changes
   useEffect(() => {
-    createCanvasTexture();
+    createCanvasTexture(scrollOffset);
   }, [scrollOffset]);
 
   // Modified positioning logic to stay fixed at initial position - with increased distance
@@ -100,7 +102,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
 
     // Load texture directly
     textureLoader.load(
-      Klart,
+      cleanWebsite,
       (loadedTexture) => {
         console.log("Texture loaded successfully");
 
@@ -145,8 +147,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
     const ctx = canvas.getContext("2d", { willReadFrequently: true }); // Optimize context
 
     const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = Klart;
+    img.src = cleanWebsite;
 
     img.onload = () => {
       const visibleHeight = canvas.height;

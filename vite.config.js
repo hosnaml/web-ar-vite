@@ -3,8 +3,8 @@ import react from "@vitejs/plugin-react";
 
 // https://vite.dev/config/
 export default defineConfig({
-  assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.jpg', '**/*.png'],
-  publicDir: 'public',
+  assetsInclude: ["**/*.glb", "**/*.gltf", "**/*.jpg", "**/*.png"],
+  publicDir: "public",
   plugins: [react()],
   server: {
     allowedHosts: ["export-pharmacy-karaoke-deposits.trycloudflare.com"],
@@ -14,11 +14,11 @@ export default defineConfig({
     assetsInlineLimit: 0, // Ensure images are processed as assets rather than inlined
   },
   optimizeDeps: {
-    include: ['three', 'three/examples/jsm/loaders/GLTFLoader'],
+    include: ["three", "three/examples/jsm/loaders/GLTFLoader"],
   },
   resolve: {
     alias: {
-      three: 'three',
+      three: "three",
     },
   },
 });
