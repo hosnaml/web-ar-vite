@@ -8,6 +8,7 @@ import ARButton from "./components/ARButton";
 import DebugOverlay from "./components/DebugOverlay";
 import BenzAd from "./components/benzAd";
 import FantaAd from "./components/FantaAd";
+import DrawerAd from "./components/DrawerAd";
 
 const DEBUG = true;
 const logDebug = (...args) => DEBUG && console.log(...args);
@@ -463,6 +464,15 @@ export default function App() {
                   scale={[0.8, 0.8, 0.8]}
                   text="Mercedes-Benz"
                   textColor="#ffffff"
+                  fontSize={0.2}
+                  rotationSpeed={0.2}
+                />
+                <DrawerAd
+                  key="drawer-model"
+                  position={[4.0, -5, -5]}
+                  scale={[2.5, 2, 2]}
+                  text="Modern Drawer"
+                  textColor="#cccccc"
                   fontSize={0.2}
                   rotationSpeed={0.2}
                 />
