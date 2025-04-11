@@ -3,7 +3,7 @@
  *
  * A 3D modern bedside drawer model for AR advertising
  */
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF, Text } from "@react-three/drei";
 
@@ -12,7 +12,7 @@ const MODEL = "/models/drawer.glb"; // Note: path relative to public/
 useGLTF.preload(MODEL);
 
 const DrawerAd = (props) => {
-  const { nodes, materials, scene } = useGLTF(MODEL);
+  const { nodes, materials, scene: gltfScene } = useGLTF(MODEL);
   const groupRef = useRef();
   const textRef = useRef();
 
