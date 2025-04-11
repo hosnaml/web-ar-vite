@@ -137,7 +137,7 @@ const DrawerAd = (props) => {
         <planeGeometry />
         <meshBasicMaterial
           map={background}
-          transparent={true}
+          transparent={false}
           opacity={0.9}
           depthWrite={false}
           depthTest={true}
