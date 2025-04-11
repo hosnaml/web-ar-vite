@@ -82,7 +82,7 @@ const DrawerAd = (props) => {
   return (
     <group ref={groupRef} {...props} dispose={null}>
       {/* Container for the 3D model that will rotate */}
-      <group ref={modelRef}>
+      <group ref={modelRef} position={[0, 0, 0.1]}>
         {/**drawer model*/}
         <primitive
           object={gltfScene}
@@ -92,12 +92,12 @@ const DrawerAd = (props) => {
       </group>
 
       {/* Background plane behind the model - NOT in the rotating group */}
-      <mesh position={[0, 0.5, -1]} scale={[5, 3, 1]} renderOrder={1}>
+      <mesh position={[2, 3, -0.9]} scale={[5, 3, 1]} renderOrder={1}>
         <planeGeometry />
         <meshBasicMaterial
           map={table}
           transparent={true}
-          opacity={0.9}
+          opacity={1}
           depthWrite={false}
           depthTest={true}
           side={THREE.DoubleSide}
