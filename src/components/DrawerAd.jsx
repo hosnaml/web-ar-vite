@@ -1,26 +1,72 @@
-import { useRef, useState } from "react";
-import { useFrame } from "@react-three/fiber";
-import { useGLTF, useTexture } from "@react-three/drei";
+import React, { useRef, useState, useEffect } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useGLTF, Text, useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import Table from "../assets/table_background.png";
+import Table from "../assets/Table_background.png";
 
 const MODEL = "/models/drawer.glb"; // Note: path relative to public/
 
 useGLTF.preload(MODEL);
 
 const DrawerAd = (props) => {
-  const { nodes, materials, scene: gltfScene } = useGLTF(MODEL);
+  // Get the nodes and materials directly from the model
+  const { scene: gltfScene } = useGLTF(MODEL);
   const groupRef = useRef();
-  const modelRef = useRef(); // New ref for the model only
+  const modelRef = useRef();
   const textRef = useRef();
+  const { scene } = useThree();
   const [modelLoaded, setModelLoaded] = useState(false);
 
   // Add state to track initial positioning
   const initialPositionSet = useRef(false);
   const initialPosition = useRef(new THREE.Vector3());
 
-  //load background texture
-  const table = useTexture(Table);
+  // Load background texture with proper error handling
+  const background = useTexture(
+    Table,
+    (texture) => {
+      console.log("Table background texture loaded successfully!");
+      texture.needsUpdate = true;
+    },
+    (error) => {
+      console.error("Error loading Table background:", error);
+    }
+  );
+
+  // Process the model once it's loaded
+  useEffect(() => {
+    if (gltfScene) {
+      // Clone the scene to avoid mutations affecting the cached model
+      const clonedScene = gltfScene.clone();
+
+      // Optimize materials for AR rendering
+      clonedScene.traverse((child) => {
+        if (child.isMesh) {
+          // Configure for AR visibility
+          child.castShadow = false;
+          child.receiveShadow = false;
+
+          // CRITICAL CHANGE: Set renderOrder to ensure it renders after background
+          child.renderOrder = 2;
+
+          if (child.material) {
+            // Set material properties for better AR rendering
+            child.material.needsUpdate = true;
+
+            // CRITICAL CHANGES FOR VISIBILITY:
+            child.material.transparent = false; // Change to false for proper depth
+            child.material.opacity = 1.0; // Full opacity
+            child.material.depthTest = true; // Keep depth testing
+            child.material.depthWrite = true; // Enable depth writing
+          }
+        }
+      });
+
+      setModelLoaded(true);
+      console.log("Drawer model processed successfully");
+    }
+  }, [gltfScene]);
+
   // Handle positioning and model rotation
   useFrame(({ camera, clock }) => {
     if (!groupRef.current) return;
@@ -35,9 +81,9 @@ const DrawerAd = (props) => {
       // Get the desired Z distance from props or use default
       const zDistance = props.position?.[2] || -3.5;
 
-      // Position to the left side
-      const xOffset = props.position?.[0] || -3.0; // Negative value places it to the left
-      const yOffset = props.position?.[1] || 0.0;
+      // Position based on props
+      const xOffset = props.position?.[0] || 4.0;
+      const yOffset = props.position?.[1] || -5.0;
 
       // Calculate position in front
       const forwardOffset = cameraDirection
@@ -57,12 +103,12 @@ const DrawerAd = (props) => {
       );
 
       groupRef.current.position.copy(initialPosition.current);
-      initialPositionSet.current = true;
-      console.log("BenzAd positioned at:", initialPosition.current);
 
       // Set the whole group to face the user initially
       groupRef.current.lookAt(camera.position);
-      setModelLoaded(true);
+
+      initialPositionSet.current = true;
+      console.log("DrawerAd positioned at:", initialPosition.current);
     }
 
     // Rotate only the 3D model
@@ -71,26 +117,26 @@ const DrawerAd = (props) => {
       modelRef.current.rotation.y = clock.getElapsedTime() * rotationSpeed;
     }
 
-    console.log("Drawer model nodes:", nodes);
-    console.log("Drawer model materials:", materials);
+    // Make the text always face the camera
+    if (textRef.current) {
+      const textWorldPos = new THREE.Vector3();
+      textRef.current.getWorldPosition(textWorldPos);
+
+      const lookAtQuaternion = new THREE.Quaternion();
+      lookAtQuaternion.setFromRotationMatrix(
+        new THREE.Matrix4().lookAt(textWorldPos, camera.position, camera.up)
+      );
+      textRef.current.quaternion.copy(lookAtQuaternion);
+    }
   });
+
   return (
     <group ref={groupRef} {...props} dispose={null}>
-      {/* Container for the 3D model that will rotate */}
-      <group ref={modelRef}>
-        {/**drawer model*/}
-        <primitive
-          object={gltfScene}
-          scale={props.scale || [0.5, 0.5, 0.5]}
-          renderOrder={2} // Make sure model renders in front of the background
-        />
-      </group>
-
       {/* Background plane behind the model - NOT in the rotating group */}
-      <mesh position={[0, 0.5, -1]} scale={[5, 3, 1]} renderOrder={1}>
+      <mesh position={[0, 0.4, -1]} scale={[2.5, 4, 0.5]} renderOrder={1}>
         <planeGeometry />
         <meshBasicMaterial
-          map={table}
+          map={background}
           transparent={true}
           opacity={0.9}
           depthWrite={false}
@@ -99,12 +145,22 @@ const DrawerAd = (props) => {
         />
       </mesh>
 
-      {/* Spotlight */}
+      {/* Container for the 3D model that will rotate */}
+      <group ref={modelRef} position={[0, -1, 0]}>
+        {/* Drawer model */}
+        <primitive
+          object={gltfScene}
+          scale={props.scale || [7, 7, 7]}
+          renderOrder={2}
+        />
+      </group>
+
+      {/* Add lighting to showcase the model */}
       <spotLight
         position={[0, 5, 2]}
-        intensity={1.2}
-        angle={0.5}
-        penumbra={0.4}
+        intensity={1.5}
+        angle={0.6}
+        penumbra={0.5}
         castShadow={false}
       />
     </group>

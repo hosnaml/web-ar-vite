@@ -339,35 +339,37 @@ export default function App() {
                     rotation={[0, 0, 0]}
                   />
 
-                  {/* BenzAd on the left side */}
+                  {/* Move FantaAd above the BenzAd */}
+                  <FantaAd
+                    key="fanta-model"
+                    position={[-3.5, 2.0, -3.5]}
+                    scale={[0.5, 0.5, 0.5]}
+                    text="Fanta"
+                    textColor="#ff6600"
+                    fontSize={0.2}
+                    rotationSpeed={0.3}
+                  />
+
+                  {/* Keep BenzAd in the same position */}
                   <BenzAd
                     key="benz-model"
-                    position={[-3.0, 0.0, -3.5]}
+                    position={[-3.5, 0.0, -3.5]}
                     scale={[0.65, 0.65, 0.65]}
                     text="Mercedes-Benz"
                     textColor="#ffffff"
                     fontSize={0.2}
                     rotationSpeed={0.2}
                   />
+
+                  {/* Move DrawerAd to where FantaAd was, but make it smaller */}
                   <DrawerAd
                     key="drawer-model"
-                    position={[4.0, -5, -5]}
-                    scale={[2.5, 2, 2]}
+                    position={[4.0, 1.0, -3.5]}
+                    scale={[1.8, 1.8, 1.8]}
                     text="Modern Drawer"
                     textColor="#cccccc"
                     fontSize={0.2}
                     rotationSpeed={0.2}
-                  />
-
-                  {/* FantaAd on the right side (with integrated background) */}
-                  <FantaAd
-                    key="fanta-model"
-                    position={[3.0, 0.0, -3.5]}
-                    scale={[0.5, 0.5, 0.5]}
-                    text="Fanta"
-                    textColor="#ff6600"
-                    fontSize={0.2}
-                    rotationSpeed={0.3}
                   />
                 </group>
               </Suspense>
