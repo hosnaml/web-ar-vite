@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     allowedHosts: [
-      "gained-andrea-drug-indonesian.trycloudflare.com                         ",
+      "differential-protect-lu-modeling.trycloudflare.com",
     ],
     cors: true, // Enable CORS for development
   },

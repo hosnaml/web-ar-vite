@@ -1,8 +1,3 @@
-/**
- * "Drawer Ad"
- *
- * A 3D modern bedside drawer model for AR advertising
- */
 import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF, useTexture } from "@react-three/drei";
