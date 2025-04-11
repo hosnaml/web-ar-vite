@@ -3,9 +3,11 @@
  *
  * A 3D Mercedes-Benz model for AR advertising
  */
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import { useGLTF, Text } from "@react-three/drei";
+import React, { useRef, useEffect } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useGLTF, Text, useTexture } from "@react-three/drei";
+import * as THREE from "three";
+import Benz from "../assets/Benz_background.png";
 
 const MODEL = "models/benz_car.glb";
 
@@ -13,9 +15,11 @@ useGLTF.preload(MODEL);
 
 const BenzAd = (props) => {
   // Get the nodes and materials directly from the model
-  const { nodes, materials, scene } = useGLTF(MODEL);
+  const { nodes, materials, scene: gltfScene } = useGLTF(MODEL); //loads .glb 3D model (in this case: "models/benz_car.glb")
   const groupRef = useRef();
-  const textRef = useRef();
+  const { scene } = useThree();
+
+  const car = useTexture(Benz);
 
   // Add rotation animation
   useFrame(({ clock }) => {
@@ -31,19 +35,14 @@ const BenzAd = (props) => {
 
   return (
     <group ref={groupRef} {...props} dispose={null}>
-      {/* Use the main scene as a primitive since we might not know the exact structure */}
-      <primitive object={scene} scale={props.scale || [0.5, 0.5, 0.5]} />
+      {/* Benz 3D model */}
+      <primitive object={gltfScene} scale={props.scale || [0.5, 0.5, 0.5]} />
 
-      {/* Add text label above the model */}
-      <Text
-        ref={textRef}
-        color={props.textColor || "#ffffff"}
-        fontSize={props.fontSize || 0.2}
-        position={[0, 0.9, 0]}
-        depthWrite={false}
-      >
-        {props.text || "Mercedes-Benz"}
-      </Text>
+      {/* Background plane behind the model */}
+      <mesh position={[0, 0.5, -2]} scale={[5, 3, 1]}>
+        <planeGeometry />
+        <meshBasicMaterial map={car} />
+      </mesh>
 
       {/* Add lighting to showcase the model */}
       <spotLight
