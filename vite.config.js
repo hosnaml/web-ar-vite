@@ -7,7 +7,7 @@ export default defineConfig({
   publicDir: "public",
   plugins: [react()],
   server: {
-    allowedHosts: ["favor-sciences-options-tion.trycloudflare.com"],
+    allowedHosts: ["differential-protect-lu-modeling.trycloudflare.com"],
     cors: true, // Enable CORS for development
   },
   build: {

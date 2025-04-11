@@ -187,3 +187,9 @@
     transform: rotate(360deg);
   }
 }
+
+/* Ensure proper layering of AR elements */
+.fanta-group {
+  position: relative;
+  z-index: 10;
+}

@@ -9,6 +9,7 @@ import DebugOverlay from "./components/DebugOverlay";
 import BenzAd from "./components/benzAd";
 import FantaAd from "./components/FantaAd";
 import DrawerAd from "./components/DrawerAd";
+import FantaBackground from "./components/Fanta-background";
 
 const DEBUG = true;
 const logDebug = (...args) => DEBUG && console.log(...args);
@@ -359,10 +360,17 @@ export default function App() {
                     rotationSpeed={0.2}
                   />
 
+                  {/* Fanta Background - positioned slightly behind the can */}
+                  <FantaBackground
+                    key="fanta-background"
+                    position={[3.0, 0.0, -3.7]}
+                    scale={[1, 1, 1]}
+                  />
+
                   {/* FantaAd on the right side */}
                   <FantaAd
                     key="fanta-model"
-                    position={[3.0, 0.0, -3.5]}
+                    position={[3.0, -1.0, -3.0]}
                     scale={[0.7, 0.7, 0.7]}
                     text="Fanta"
                     textColor="#ff6600"
