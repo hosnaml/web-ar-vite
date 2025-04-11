@@ -6,14 +6,11 @@ import "./App.css";
 import ImagePlane from "./components/ImagePlane";
 import ARButton from "./components/ARButton";
 import DebugOverlay from "./components/DebugOverlay";
-import BenzAd from "./components/benzAd";
-import FantaAd from "./components/FantaAd"; // Updated FantaAd with integrated background
-import DrawerAd from "./components/DrawerAd";
 
 const DEBUG = true;
 const logDebug = (...args) => DEBUG && console.log(...args);
 
-// Fix iOS detection function - there was a syntax error
+// Fix iOS detection function
 const isIOS = () => {
   return (
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -65,7 +62,7 @@ export default function App() {
   const [isIOSDevice, setIsIOSDevice] = useState(false);
   const [arInitializing, setARInitializing] = useState(false);
 
-  // In your App component, replace the existing touch handling with this:
+  // Touch handling
   useEffect(() => {
     let touchStartY = null;
 
@@ -331,43 +328,13 @@ export default function App() {
                 <directionalLight position={[0, 0, -1]} intensity={5.0} />
 
                 <group>
+                  {/* Only keep ImagePlane, with updated image path */}
                   <ImagePlane
                     scrollOffset={scrollY}
                     key="main-center"
                     position={[0, 0.8, -5]}
                     scale={[3.0, 4.0, 1]}
                     rotation={[0, 0, 0]}
-                  />
-
-                  {/* BenzAd on the left side */}
-                  <BenzAd
-                    key="benz-model"
-                    position={[-3.0, 0.0, -3.5]}
-                    scale={[0.65, 0.65, 0.65]}
-                    text="Mercedes-Benz"
-                    textColor="#ffffff"
-                    fontSize={0.2}
-                    rotationSpeed={0.2}
-                  />
-                  <DrawerAd
-                    key="drawer-model"
-                    position={[4.0, -5, -5]}
-                    scale={[2.5, 2, 2]}
-                    text="Modern Drawer"
-                    textColor="#cccccc"
-                    fontSize={0.2}
-                    rotationSpeed={0.2}
-                  />
-
-                  {/* FantaAd on the right side (with integrated background) */}
-                  <FantaAd
-                    key="fanta-model"
-                    position={[3.0, 0.0, -3.5]}
-                    scale={[0.5, 0.5, 0.5]}
-                    text="Fanta"
-                    textColor="#ff6600"
-                    fontSize={0.2}
-                    rotationSpeed={0.3}
                   />
                 </group>
               </Suspense>

@@ -3,7 +3,7 @@ import { TextureLoader } from "three";
 import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import cleanWebsite from "../assets/cleanWebsite.png";
+import frame31 from "../assets/WebpageWithAds.png";
 
 // Component for rendering a textured plane with platform-specific handling
 const ImagePlane = ({ scrollOffset = 0, ...props }) => {
@@ -38,7 +38,6 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
     if (loaded) createCanvasTexture(scrollOffset);
   }, [scrollOffset]); // Re-run when scroll changes after initial load
 
-  // Modified positioning logic to stay fixed at initial position - with increased distance
   // Modified positioning logic to stay fixed in world space while respecting X offset from props
   useFrame(({ camera }) => {
     if (!meshRef.current) return;
@@ -105,7 +104,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
 
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.src = cleanWebsite?.src || cleanWebsite;
+    img.src = frame31?.src || frame31; // Updated to use Frame 31.png
 
     img.onload = () => {
       const visibleHeight = canvas.height;
@@ -177,10 +176,3 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
 };
 
 export default ImagePlane;
-
-<ImagePlane
-  scrollOffset={scrollY}
-  position={[1, 0.3, -5]} // Changed Z for more distance
-  scale={[3.0, 3, 1]} // Increased scale to compensate for distance
-  rotation={[0, 0, 0]}
-/>;
