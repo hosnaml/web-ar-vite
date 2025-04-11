@@ -2,8 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, Text, useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import fantaBackground from "../assets/Fanta-Background.png";
-
+import fantaBackground from "../assets/Fanta_background.png";
 // Path to the can model in public folder
 const MODEL_PATH = "/models/can.glb";
 
@@ -25,8 +24,18 @@ const FantaAd = (props) => {
   // Load the model using useGLTF hook
   const gltf = useGLTF(MODEL_PATH);
 
-  // Load background texture
-  const background = useTexture(fantaBackground);
+  // Load background texture with error handling
+  const background = useTexture(
+    fantaBackground,
+    (texture) => {
+      console.log("Fanta background texture loaded successfully!");
+      texture.needsUpdate = true;
+    },
+    (error) => {
+      console.error("Error loading Fanta background:", error);
+      setHasError(true);
+    }
+  );
 
   // Process the model once it's loaded
   useEffect(() => {
