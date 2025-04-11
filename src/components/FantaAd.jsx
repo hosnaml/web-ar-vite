@@ -161,7 +161,7 @@ const FantaAd = (props) => {
         <meshBasicMaterial
           map={background}
           transparent={true}
-          opacity={0.9}
+          opacity={1}
           depthWrite={false}
           depthTest={true}
           side={THREE.DoubleSide}

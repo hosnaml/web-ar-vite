@@ -1,13 +1,13 @@
 import { Canvas } from "@react-three/fiber";
 import { createXRStore, XR, XROrigin } from "@react-three/xr";
 import { useState, useEffect, useRef, Suspense } from "react";
-import * as THREE from "three"; // Add THREE import
+import * as THREE from "three";
 import "./App.css";
 import ImagePlane from "./components/ImagePlane";
 import ARButton from "./components/ARButton";
 import DebugOverlay from "./components/DebugOverlay";
 import BenzAd from "./components/benzAd";
-import FantaAd from "./components/FantaAd";
+import FantaAd from "./components/FantaAd"; // Updated FantaAd with integrated background
 import DrawerAd from "./components/DrawerAd";
 
 const DEBUG = true;
@@ -339,33 +339,37 @@ export default function App() {
                     rotation={[0, 0, 0]}
                   />
 
-                  {/* BenzAd on the left side */}
-                  <BenzAd
-                    key="benz-model"
-                    position={[-3.0, 0.0, -3.5]}
-                    scale={[0.8, 0.8, 0.8]}
-                    fontSize={0.2}
-                    rotationSpeed={0.2}
-                  />
-                  <DrawerAd
-                    key="drawer-model"
-                    position={[4.0, -5, -5]}
-                    scale={[2.5, 2, 2]}
-                    text="Modern Drawer"
-                    textColor="#cccccc"
-                    fontSize={0.2}
-                    rotationSpeed={0.2}
-                  />
-
-                  {/* FantaAd on the right side */}
+                  {/* Move FantaAd above the BenzAd */}
                   <FantaAd
                     key="fanta-model"
-                    position={[3.0, 0.0, -3.5]}
-                    scale={[0.7, 0.7, 0.7]}
+                    position={[-3.5, 2.0, -3.5]}
+                    scale={[0.5, 0.5, 0.5]}
                     text="Fanta"
                     textColor="#ff6600"
                     fontSize={0.2}
                     rotationSpeed={0.3}
+                  />
+
+                  {/* Keep BenzAd in the same position */}
+                  <BenzAd
+                    key="benz-model"
+                    position={[-3.5, 0.0, -3.5]}
+                    scale={[0.65, 0.65, 0.65]}
+                    text="Mercedes-Benz"
+                    textColor="#ffffff"
+                    fontSize={0.2}
+                    rotationSpeed={0.2}
+                  />
+
+                  {/* Move DrawerAd to where FantaAd was, but make it smaller */}
+                  <DrawerAd
+                    key="drawer-model"
+                    position={[4.0, 1.0, -3.5]}
+                    scale={[1.8, 1.8, 1.8]}
+                    text="Modern Drawer"
+                    textColor="#cccccc"
+                    fontSize={0.2}
+                    rotationSpeed={0.2}
                   />
                 </group>
               </Suspense>

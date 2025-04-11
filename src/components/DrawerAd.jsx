@@ -138,7 +138,7 @@ const DrawerAd = (props) => {
         <meshBasicMaterial
           map={background}
           transparent={true}
-          opacity={1}
+          opacity={0.9}
           depthWrite={false}
           depthTest={true}
           side={THREE.DoubleSide}
