@@ -344,7 +344,7 @@ export default function App() {
                   <BenzAd
                     key="benz-model"
                     position={[-3.0, 0.0, -3.5]}
-                    scale={[0.8, 0.8, 0.8]}
+                    scale={[0.65, 0.65, 0.65]}
                     text="Mercedes-Benz"
                     textColor="#ffffff"
                     fontSize={0.2}
