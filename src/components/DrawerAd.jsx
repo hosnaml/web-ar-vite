@@ -1,8 +1,3 @@
-/**
- * "Drawer Ad"
- *
- * A 3D modern bedside drawer model for AR advertising
- */
 import { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF, useTexture } from "@react-three/drei";
@@ -82,7 +77,7 @@ const DrawerAd = (props) => {
   return (
     <group ref={groupRef} {...props} dispose={null}>
       {/* Container for the 3D model that will rotate */}
-      <group ref={modelRef} position={[0, 0, 0.1]}>
+      <group ref={modelRef}>
         {/**drawer model*/}
         <primitive
           object={gltfScene}
@@ -92,7 +87,7 @@ const DrawerAd = (props) => {
       </group>
 
       {/* Background plane behind the model - NOT in the rotating group */}
-      <mesh position={[2, 3, -0.9]} scale={[5, 3, 1]} renderOrder={1}>
+      <mesh position={[0, 0.8, -1]} scale={[5, 3, 1]} renderOrder={1}>
         <planeGeometry />
         <meshBasicMaterial
           map={table}
