@@ -1,15 +1,14 @@
 import { Canvas } from "@react-three/fiber";
 import { createXRStore, XR, XROrigin } from "@react-three/xr";
 import { useState, useEffect, useRef, Suspense } from "react";
-import * as THREE from "three"; // Add THREE import
+import * as THREE from "three";
 import "./App.css";
 import ImagePlane from "./components/ImagePlane";
 import ARButton from "./components/ARButton";
 import DebugOverlay from "./components/DebugOverlay";
 import BenzAd from "./components/benzAd";
-import FantaAd from "./components/FantaAd";
+import FantaAd from "./components/FantaAd"; // Updated FantaAd with integrated background
 import DrawerAd from "./components/DrawerAd";
-import FantaBackground from "./components/Fanta-background";
 
 const DEBUG = true;
 const logDebug = (...args) => DEBUG && console.log(...args);
@@ -360,18 +359,11 @@ export default function App() {
                     rotationSpeed={0.2}
                   />
 
-                  {/* Fanta Background - positioned slightly behind the can */}
-                  <FantaBackground
-                    key="fanta-background"
-                    position={[3.0, 0.0, -3.7]}
-                    scale={[1, 1, 1]}
-                  />
-
-                  {/* FantaAd on the right side */}
+                  {/* FantaAd on the right side (with integrated background) */}
                   <FantaAd
                     key="fanta-model"
-                    position={[3.0, -1.0, -3.0]}
-                    scale={[0.7, 0.7, 0.7]}
+                    position={[3.0, 0.0, -3.5]}
+                    scale={[0.5, 0.5, 0.5]}
                     text="Fanta"
                     textColor="#ff6600"
                     fontSize={0.2}

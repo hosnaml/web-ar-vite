@@ -1,12 +1,8 @@
-/**
- * "Fanta Ad"
- *
- * A 3D Fanta can model for AR advertising
- */
-import { useRef, useState, useEffect } from "react";
-import { useFrame } from "@react-three/fiber";
+import React, { useRef, useState, useEffect } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useGLTF, Text, useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import { useGLTF, Text } from "@react-three/drei";
+import fantaBackground from "../assets/Fanta-Background.png";
 
 // Path to the can model in public folder
 const MODEL_PATH = "/models/can.glb";
@@ -16,21 +12,21 @@ useGLTF.preload(MODEL_PATH);
 
 const FantaAd = (props) => {
   const groupRef = useRef();
+  const modelRef = useRef(); // Ref for just the 3D model
   const textRef = useRef();
+  const { scene } = useThree();
   const [hasError, setHasError] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
 
-  // Load the model using useGLTF hook
-  let gltf = null;
-  try {
-    gltf = useGLTF(MODEL_PATH);
-  } catch (error) {
-    console.error("Error loading can model:", error);
-    setHasError(true);
-  }
+  // Add state to track initial positioning
+  const initialPositionSet = useRef(false);
+  const initialPosition = useRef(new THREE.Vector3());
 
-  // Store the scene for use in the component
-  const [model, setModel] = useState(null);
+  // Load the model using useGLTF hook
+  const gltf = useGLTF(MODEL_PATH);
+
+  // Load background texture
+  const background = useTexture(fantaBackground);
 
   // Process the model once it's loaded
   useEffect(() => {
@@ -45,30 +41,29 @@ const FantaAd = (props) => {
           child.castShadow = false;
           child.receiveShadow = false;
 
+          // CRITICAL CHANGE: Set renderOrder to ensure it renders after background
+          child.renderOrder = 2;
+
           if (child.material) {
             // Set material properties for better AR rendering
             child.material.needsUpdate = true;
             child.material.metalness = 0.8;
             child.material.roughness = 0.2;
-            // Ensure the can is visible but slightly transparent
-            child.material.transparent = true;
-            child.material.opacity = 0.95;
-            child.material.depthTest = true;
-            child.material.depthWrite = false;
+
+            // CRITICAL CHANGES FOR VISIBILITY:
+            child.material.transparent = false; // Change to false for proper depth
+            child.material.opacity = 1.0; // Full opacity
+            child.material.depthTest = true; // Keep depth testing
+            child.material.depthWrite = true; // Enable depth writing
             child.material.toneMapped = false;
           }
         }
       });
 
-      setModel(clonedScene);
       setModelLoaded(true);
       console.log("Fanta can model processed successfully");
     }
   }, [gltf]);
-
-  // Add state to track initial positioning
-  const initialPositionSet = useRef(false);
-  const initialPosition = useRef(new THREE.Vector3());
 
   // Float animation for the can
   const floatAnimation = useRef({
@@ -76,9 +71,9 @@ const FantaAd = (props) => {
     speed: 0.5 + Math.random() * 0.5,
   });
 
-  // Handle model positioning and rotation
+  // Handle positioning and model rotation
   useFrame(({ camera, clock }) => {
-    if (!groupRef.current || hasError) return;
+    if (!groupRef.current) return;
 
     // Set initial position once based on camera position
     if (!initialPositionSet.current) {
@@ -90,7 +85,7 @@ const FantaAd = (props) => {
       // Get the desired Z distance from props or use default
       const zDistance = props.position?.[2] || -3.5;
 
-      // Position to the right of ImagePlane
+      // Position to the right side
       const xOffset = props.position?.[0] || 3.0; // Positive value places it to the right
       const yOffset = props.position?.[1] || 0.0;
 
@@ -112,82 +107,87 @@ const FantaAd = (props) => {
       );
 
       groupRef.current.position.copy(initialPosition.current);
+
+      // Set the whole group to face the user initially
+      groupRef.current.lookAt(camera.position);
+
       initialPositionSet.current = true;
       console.log("FantaAd positioned at:", initialPosition.current);
     }
 
-    // Rotate can slowly
-    const rotationSpeed = props.rotationSpeed || 0.2;
-    groupRef.current.rotation.y = clock.getElapsedTime() * rotationSpeed;
+    // Rotate only the 3D model
+    if (modelRef.current) {
+      const rotationSpeed = props.rotationSpeed || 0.3;
+      modelRef.current.rotation.y = clock.getElapsedTime() * rotationSpeed;
+    }
 
-    // Add floating animation
-    if (modelLoaded) {
+    // Add floating animation to the model only
+    if (modelLoaded && modelRef.current) {
       const time = clock.getElapsedTime();
       const floatSpeed = floatAnimation.current.speed;
       const floatHeight = Math.sin(time * floatSpeed) * 0.1;
 
-      // Apply floating motion
-      groupRef.current.position.y = initialPosition.current.y + floatHeight;
+      // Apply floating motion just to the model, not the whole group
+      modelRef.current.position.y = floatHeight;
+    }
 
-      // Make the text always face the camera
-      if (textRef.current) {
-        const textWorldPos = new THREE.Vector3();
-        textRef.current.getWorldPosition(textWorldPos);
+    // Make the text always face the camera
+    if (textRef.current) {
+      const textWorldPos = new THREE.Vector3();
+      textRef.current.getWorldPosition(textWorldPos);
 
-        const lookAtQuaternion = new THREE.Quaternion();
-        lookAtQuaternion.setFromRotationMatrix(
-          new THREE.Matrix4().lookAt(textWorldPos, camera.position, camera.up)
-        );
-        textRef.current.quaternion.copy(lookAtQuaternion);
-      }
+      const lookAtQuaternion = new THREE.Quaternion();
+      lookAtQuaternion.setFromRotationMatrix(
+        new THREE.Matrix4().lookAt(textWorldPos, camera.position, camera.up)
+      );
+      textRef.current.quaternion.copy(lookAtQuaternion);
     }
   });
 
-  // If error or no model, don't render anything
-  if (hasError || !model) {
-    return (
-      <mesh position={props.position || [3.0, 0.0, -3.5]}>
-        <boxGeometry args={[0.5, 0.5, 0.5]} />
-        <meshStandardMaterial color="orange" />
-        <Text position={[0, 1, 0]} color="white" fontSize={0.2}>
-          Error loading Fanta model
-        </Text>
-      </mesh>
-    );
-  }
-
   return (
     <group ref={groupRef} {...props} dispose={null}>
-      {/* Use the can model */}
-      <primitive
-        object={model}
-        scale={props.scale || [0.7, 0.7, 0.7]}
-        position={[0, 0, 0]}
-      />
+      {/* Background plane behind the model - NOT in the rotating group */}
+      <mesh position={[0, 0.8, -1]} scale={[5, 3, 1]} renderOrder={1}>
+        <planeGeometry />
+        <meshBasicMaterial
+          map={background}
+          transparent={true}
+          opacity={0.9}
+          depthWrite={false}
+          depthTest={true}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Container for the 3D model that will rotate */}
+      <group ref={modelRef}>
+        {/* Fanta can model */}
+        <primitive
+          object={gltf.scene}
+          scale={props.scale || [0.5, 0.5, 0.5]}
+          renderOrder={2} // Make sure model renders in front of the background
+        />
+      </group>
 
       {/* Add text label above the can */}
       <Text
         ref={textRef}
         color={props.textColor || "#ff6600"}
         fontSize={props.fontSize || 0.2}
-        position={[0, 1.5, 0]}
+        position={[0, 1.2, 0]}
         depthWrite={false}
       >
         {props.text || "Fanta"}
       </Text>
 
-      {/* Add spotlight to highlight the can */}
+      {/* Add lighting to showcase the model */}
       <spotLight
-        position={[0, 3, 2]}
+        position={[0, 5, 2]}
         intensity={1.5}
         angle={0.6}
         penumbra={0.5}
         castShadow={false}
-        color="#ffcc88"
       />
-
-      {/* Add a point light for better material highlights */}
-      <pointLight position={[1, 0, 1]} intensity={0.8} color="#ffaa66" />
     </group>
   );
 };
