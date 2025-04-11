@@ -58,7 +58,7 @@ export default function App() {
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
-    console.log("Session is actived:", sessionActive);
+    console.log("Session is active:", sessionActive);
   }, [sessionActive]);
   const [forceRender, setForceRender] = useState(false);
   const sessionStartTimeRef = useRef(null);
