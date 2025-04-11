@@ -98,7 +98,7 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
   // Universal texture loading approach that works on both platforms
   useEffect(() => {
     console.log("Starting texture loading...");
-    console.log("Loading image from path:", Klart);
+    console.log("Loading image from path:", cleanWebsite); // <-- Change from Klart to cleanWebsite
 
     // Create a texture loader
     const textureLoader = new THREE.TextureLoader();
@@ -137,17 +137,19 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
         console.error("Error loading texture:", error);
         console.log("Falling back to canvas texture");
 
-        // Fallback to canvas approach
+        // Call the fallback function
+        createCanvasTexture(scrollOffset);
       }
     );
   }, []); */
 
   // Fallback function to create canvas texture
-  const createCanvasTexture = (componentId = "MainImagePlane") => {
+  const createCanvasTexture = (scrollOffset) => {
+    // Ensure scrollOffset is passed here
     const canvas = document.createElement("canvas");
     canvas.width = isIOSDevice ? 256 : 512;
     canvas.height = isIOSDevice ? 448 : 896;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true }); // Optimize context
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -191,6 +193,11 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
       console.log("Texture updated with cropped canvas");
       setTexture(newTexture);
       setLoaded(true);
+    };
+
+    img.onerror = (err) => {
+      console.error("Image loading error:", err);
+      setHasError(true);
     };
   };
 

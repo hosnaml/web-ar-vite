@@ -7,7 +7,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF, Text } from "@react-three/drei";
 
-const MODEL = "public/models/benz_car.glb";
+const MODEL = "models/benz_car.glb";
 
 useGLTF.preload(MODEL);
 

@@ -14,10 +14,18 @@
     background: transparent !important;
   }
 
+  /* Conditional touch behavior for AR canvas */
   .ar-canvas {
     background: transparent !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+    /* Default to auto for scrollability */
+    touch-action: auto !important;
+  }
+
+  /* When in active AR session, block default touch behaviors */
+  .ar-canvas.ar-active {
+    touch-action: none !important;
   }
 }
 
@@ -57,6 +65,7 @@
   left: 0;
   z-index: 10;
   background: transparent !important;
+  touch-action: auto !important;
 }
 
 /* Button container */
