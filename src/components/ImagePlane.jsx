@@ -94,54 +94,6 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
     // ONLY rotate to face camera, but don't follow camera position
     meshRef.current.lookAt(camera.position);
   });
-  /*
-  // Universal texture loading approach that works on both platforms
-  useEffect(() => {
-    console.log("Starting texture loading...");
-    console.log("Loading image from path:", cleanWebsite); // <-- Change from Klart to cleanWebsite
-
-    // Create a texture loader
-    const textureLoader = new THREE.TextureLoader();
-
-    // Load texture directly
-    textureLoader.load(
-      cleanWebsite,
-      (loadedTexture) => {
-        console.log("Texture loaded successfully");
-
-        // Apply universal optimizations
-        loadedTexture.minFilter = THREE.LinearFilter;
-        loadedTexture.magFilter = THREE.LinearFilter;
-        loadedTexture.generateMipmaps = false;
-        loadedTexture.needsUpdate = true;
-
-        // Set the texture
-        setTexture(loadedTexture);
-        setLoaded(true);
-
-        // Update material directly if available
-        if (materialRef.current) {
-          materialRef.current.map = loadedTexture;
-          materialRef.current.needsUpdate = true;
-          console.log("Updated material with texture");
-        }
-      },
-      // Progress callback
-      (xhr) => {
-        console.log(
-          `Texture loading: ${(xhr.loaded / xhr.total) * 100}% loaded`
-        );
-      },
-      // Error callback
-      (error) => {
-        console.error("Error loading texture:", error);
-        console.log("Falling back to canvas texture");
-
-        // Call the fallback function
-        createCanvasTexture(scrollOffset);
-      }
-    );
-  }, []); */
 
   // Fallback function to create canvas texture
   const createCanvasTexture = (scrollOffset) => {
@@ -225,3 +177,10 @@ const ImagePlane = ({ scrollOffset = 0, ...props }) => {
 };
 
 export default ImagePlane;
+
+<ImagePlane
+  scrollOffset={scrollY}
+  position={[1, 0.3, -5]} // Changed Z for more distance
+  scale={[3.0, 3, 1]} // Increased scale to compensate for distance
+  rotation={[0, 0, 0]}
+/>;

@@ -7,7 +7,7 @@ export default defineConfig({
   publicDir: "public",
   plugins: [react()],
   server: {
-    allowedHosts: ["aerial-calls-roots-decades.trycloudflare.com"],
+    allowedHosts: ["favor-sciences-options-tion.trycloudflare.com"],
     cors: true, // Enable CORS for development
   },
   build: {

@@ -13,7 +13,7 @@ import DrawerAd from "./components/DrawerAd";
 const DEBUG = true;
 const logDebug = (...args) => DEBUG && console.log(...args);
 
-// Detect iOS devices
+// Fix iOS detection function - there was a syntax error
 const isIOS = () => {
   return (
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -65,155 +65,34 @@ export default function App() {
   const [isIOSDevice, setIsIOSDevice] = useState(false);
   const [arInitializing, setARInitializing] = useState(false);
 
+  // In your App component, replace the existing touch handling with this:
   useEffect(() => {
-    // References for tracking touch positions
     let touchStartY = null;
-    let lastScrollY = scrollY;
 
-    // 1. Create handlers with proper event prevention for iOS
     const handleTouchStart = (e) => {
-      if (isIOSDevice && sessionActive) {
-        e.preventDefault(); // Critical for iOS during WebXR
-        e.stopPropagation();
-      }
-
-      if (e.touches && e.touches.length === 1) {
+      if (e.touches.length === 1) {
         touchStartY = e.touches[0].clientY;
-        lastScrollY = scrollY; // Store current scroll position
-
-        if (DEBUG) console.log("Touch start at:", touchStartY);
       }
     };
 
     const handleTouchMove = (e) => {
-      if (isIOSDevice && sessionActive) {
-        e.preventDefault(); // Critical for iOS during WebXR
-        e.stopPropagation();
-      }
-
-      if (e.touches && e.touches.length === 1 && touchStartY !== null) {
-        const currentY = e.touches[0].clientY;
-        const deltaY = touchStartY - currentY;
-
-        // Use different sensitivity based on device and XR state
-        const sensitivity = isIOSDevice
-          ? sessionActive
-            ? 0.02
-            : 0.01 // iOS needs different sensitivity in XR mode
-          : 0.01; // Default sensitivity for Android
-
+      if (e.touches.length === 1 && touchStartY !== null) {
+        const deltaY = touchStartY - e.touches[0].clientY;
         setScrollY((prev) => {
-          // Calculate new scroll position with improved smoothing
-          const next = lastScrollY + deltaY * sensitivity;
-          // Clamp between 0 and 1
-          const clamped = Math.min(1, Math.max(0, next));
-
-          if (DEBUG && Math.abs(prev - clamped) > 0.01) {
-            console.log(
-              `Scroll updated: ${prev.toFixed(2)} -> ${clamped.toFixed(
-                2
-              )}, delta: ${deltaY}`
-            );
-          }
-
-          return clamped;
+          let next = prev + deltaY * 0.002; // Adjust sensitivity if needed
+          return Math.min(1, Math.max(0, next)); // Clamp between 0 and 1
         });
-
-        // Don't update touchStartY here to prevent acceleration
+        touchStartY = e.touches[0].clientY;
       }
     };
 
-    const handleTouchEnd = (e) => {
-      if (isIOSDevice && sessionActive) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-
-      // Reset the touch tracking
-      touchStartY = null;
-      lastScrollY = scrollY;
-      if (DEBUG) console.log("Touch ended, final scroll:", scrollY.toFixed(2));
-    };
-
-    // 2. Target the DOM overlay element directly - CRITICAL for iOS WebXR
-    const domOverlayElement = document.body; // Must match your store config
-
-    // 3. Use proper event options for iOS
-    const eventOptions = { passive: false, capture: true };
-
-    // 4. Add event listeners with proper options
-    domOverlayElement.addEventListener(
-      "touchstart",
-      handleTouchStart,
-      eventOptions
-    );
-    domOverlayElement.addEventListener(
-      "touchmove",
-      handleTouchMove,
-      eventOptions
-    );
-    domOverlayElement.addEventListener(
-      "touchend",
-      handleTouchEnd,
-      eventOptions
-    );
-    domOverlayElement.addEventListener(
-      "touchcancel",
-      handleTouchEnd,
-      eventOptions
-    );
-
-    // Also add to window as fallback (won't hurt, but may not help on iOS during XR)
-    window.addEventListener(
-      "touchstart",
-      handleTouchStart,
-      isIOSDevice ? eventOptions : undefined
-    );
-    window.addEventListener(
-      "touchmove",
-      handleTouchMove,
-      isIOSDevice ? eventOptions : undefined
-    );
-    window.addEventListener("touchend", handleTouchEnd);
-    window.addEventListener("touchcancel", handleTouchEnd);
-
-    // 5. Cleanup properly
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchmove", handleTouchMove);
     return () => {
-      domOverlayElement.removeEventListener(
-        "touchstart",
-        handleTouchStart,
-        eventOptions
-      );
-      domOverlayElement.removeEventListener(
-        "touchmove",
-        handleTouchMove,
-        eventOptions
-      );
-      domOverlayElement.removeEventListener(
-        "touchend",
-        handleTouchEnd,
-        eventOptions
-      );
-      domOverlayElement.removeEventListener(
-        "touchcancel",
-        handleTouchEnd,
-        eventOptions
-      );
-
-      window.removeEventListener(
-        "touchstart",
-        handleTouchStart,
-        isIOSDevice ? eventOptions : undefined
-      );
-      window.removeEventListener(
-        "touchmove",
-        handleTouchMove,
-        isIOSDevice ? eventOptions : undefined
-      );
-      window.removeEventListener("touchend", handleTouchEnd);
-      window.removeEventListener("touchcancel", handleTouchEnd);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
     };
-  }, [isIOSDevice, sessionActive, scrollY]);
+  }, []);
 
   // Check WebXR support once on component mount
   useEffect(() => {
@@ -400,98 +279,102 @@ export default function App() {
         </div>
       )}
 
-      <Canvas
-        className="ar-canvas"
-        gl={{
-          alpha: true,
-          antialias: isIOSDevice,
-          preserveDrawingBuffer: true,
-          clearColor: [0, 0, 0, 0],
-          premultipliedAlpha: false,
-          powerPreference: "high-performance",
-          // Add this parameter to ensure WebXR renders correctly
-          xrCompatible: true,
-        }}
-        // Make sure scene is transparent
-        onCreated={(state) => {
-          state.gl.setClearColor(0, 0, 0, 0);
-          state.scene.background = null;
-          // Ensure proper clear flags
-          state.gl.autoClear = false;
+      {/* Wrap Canvas in a scroll container */}
+      <div className="scroll-container">
+        <Canvas
+          className={`ar-canvas scroll-enabled ${
+            sessionActive ? "ar-active" : ""
+          }`}
+          gl={{
+            alpha: true,
+            antialias: isIOSDevice,
+            preserveDrawingBuffer: true,
+            clearColor: [0, 0, 0, 0],
+            premultipliedAlpha: false,
+            powerPreference: "high-performance",
+            xrCompatible: true,
+          }}
+          // Make sure scene is transparent
+          onCreated={(state) => {
+            state.gl.setClearColor(0, 0, 0, 0);
+            state.scene.background = null;
+            // Ensure proper clear flags
+            state.gl.autoClear = false;
 
-          if (isIOSDevice) {
-            try {
-              const glContext = state.gl.getContext();
-              if (glContext) {
-                // Clear both buffers for a clean start
-                glContext.clear(
-                  glContext.COLOR_BUFFER_BIT | glContext.DEPTH_BUFFER_BIT
-                );
-                // Instead of disabling depth, configure it properly
-                glContext.depthFunc(glContext.LEQUAL);
+            if (isIOSDevice) {
+              try {
+                const glContext = state.gl.getContext();
+                if (glContext) {
+                  // Clear both buffers for a clean start
+                  glContext.clear(
+                    glContext.COLOR_BUFFER_BIT | glContext.DEPTH_BUFFER_BIT
+                  );
+                  // Instead of disabling depth, configure it properly
+                  glContext.depthFunc(glContext.LEQUAL);
+                }
+              } catch (e) {
+                console.error("WebGL context error:", e);
               }
-            } catch (e) {
-              console.error("WebGL context error:", e);
             }
-          }
 
-          logDebug("Canvas created with transparent settings");
-        }}
-        flat={isIOSDevice}
-        legacy={isIOSDevice}
-      >
-        {/* Don't set any color attachment here */}
-        <XR store={store}>
-          <XROrigin />
-          {shouldRender && (
-            <Suspense fallback={null}>
-              <ambientLight intensity={5.0} />
-              <directionalLight position={[0, 0, -1]} intensity={5.0} />
+            logDebug("Canvas created with transparent settings");
+          }}
+          flat={isIOSDevice}
+          legacy={isIOSDevice}
+        >
+          {/* Don't set any color attachment here */}
+          <XR store={store}>
+            <XROrigin />
+            {shouldRender && (
+              <Suspense fallback={null}>
+                <ambientLight intensity={5.0} />
+                <directionalLight position={[0, 0, -1]} intensity={5.0} />
 
-              <group>
-                <ImagePlane
-                  scrollOffset={scrollY}
-                  key="main-center"
-                  position={[0, 0.8, -5]}
-                  scale={[3.0, 4.0, 1]}
-                  rotation={[0, 0, 0]}
-                />
+                <group>
+                  <ImagePlane
+                    scrollOffset={scrollY}
+                    key="main-center"
+                    position={[0, 0.8, -5]}
+                    scale={[3.0, 4.0, 1]}
+                    rotation={[0, 0, 0]}
+                  />
 
-                {/* BenzAd on the left side */}
-                <BenzAd
-                  key="benz-model"
-                  position={[-3.0, 0.0, -3.5]}
-                  scale={[0.8, 0.8, 0.8]}
-                  text="Mercedes-Benz"
-                  textColor="#ffffff"
-                  fontSize={0.2}
-                  rotationSpeed={0.2}
-                />
-                <DrawerAd
-                  key="drawer-model"
-                  position={[4.0, -5, -5]}
-                  scale={[2.5, 2, 2]}
-                  text="Modern Drawer"
-                  textColor="#cccccc"
-                  fontSize={0.2}
-                  rotationSpeed={0.2}
-                />
+                  {/* BenzAd on the left side */}
+                  <BenzAd
+                    key="benz-model"
+                    position={[-3.0, 0.0, -3.5]}
+                    scale={[0.8, 0.8, 0.8]}
+                    text="Mercedes-Benz"
+                    textColor="#ffffff"
+                    fontSize={0.2}
+                    rotationSpeed={0.2}
+                  />
+                  <DrawerAd
+                    key="drawer-model"
+                    position={[4.0, -5, -5]}
+                    scale={[2.5, 2, 2]}
+                    text="Modern Drawer"
+                    textColor="#cccccc"
+                    fontSize={0.2}
+                    rotationSpeed={0.2}
+                  />
 
-                {/* FantaAd on the right side */}
-                <FantaAd
-                  key="fanta-model"
-                  position={[3.0, 0.0, -3.5]}
-                  scale={[0.7, 0.7, 0.7]}
-                  text="Fanta"
-                  textColor="#ff6600"
-                  fontSize={0.2}
-                  rotationSpeed={0.3}
-                />
-              </group>
-            </Suspense>
-          )}
-        </XR>
-      </Canvas>
+                  {/* FantaAd on the right side */}
+                  <FantaAd
+                    key="fanta-model"
+                    position={[3.0, 0.0, -3.5]}
+                    scale={[0.7, 0.7, 0.7]}
+                    text="Fanta"
+                    textColor="#ff6600"
+                    fontSize={0.2}
+                    rotationSpeed={0.3}
+                  />
+                </group>
+              </Suspense>
+            )}
+          </XR>
+        </Canvas>
+      </div>
     </div>
   );
 }
