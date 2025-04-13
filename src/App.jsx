@@ -79,7 +79,7 @@ export default function App() {
       if (e.touches.length === 1 && touchStartY !== null) {
         const deltaY = touchStartY - e.touches[0].clientY;
         setScrollY((prev) => {
-          let next = prev + deltaY * 0.002; // Adjust sensitivity if needed
+          let next = prev + deltaY * 0.001; // Adjust sensitivity if needed
           return Math.min(1, Math.max(0, next)); // Clamp between 0 and 1
         });
         touchStartY = e.touches[0].clientY;

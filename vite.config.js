@@ -7,7 +7,7 @@ export default defineConfig({
   publicDir: "public",
   plugins: [react()],
   server: {
-    allowedHosts: ["bibliographic-films-lady-wifi.trycloudflare.com"],
+    allowedHosts: ["carl-pharmacies-avatar-chad.trycloudflare.com"],
     cors: true, // Enable CORS for development
   },
   build: {
