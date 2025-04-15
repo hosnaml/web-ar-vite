@@ -7,7 +7,7 @@ export default defineConfig({
   publicDir: "public",
   plugins: [react()],
   server: {
-    allowedHosts: ["carl-pharmacies-avatar-chad.trycloudflare.com"],
+    allowedHosts: ["arguments-vast-bathrooms-soccer.trycloudflare.com"],
     cors: true, // Enable CORS for development
   },
   build: {
