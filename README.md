@@ -1,12 +1,7 @@
-# React + Vite
+# Web XR Ad-Extractor
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+For our thesis project I studied the user retention of advertisements on webpages in AR space. The study aimed to understand whether the extraction of ads on a page to real-space in AR can help users focus on the contents of a page while also retaining the information of the ads the same as they would if the ads were embedded on the page. On success this would pave the way for an application which extracts ads, dynamically, from a page, removing clutter in the flow without affecting any advertisers which have paid to display ads on a page. The application is written using ThreeJS, React, ReactXR, and React fiber.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+<img src="https://github.com/user-attachments/assets/84d01ae2-13b8-4d40-9f4f-7570d8d8a419" width="500">
+<img src="https://github.com/user-attachments/assets/dd4f48ab-4b52-4b33-be4f-399892d40d93" width="500">
+<img src="https://github.com/user-attachments/assets/2c9caa94-7b3c-439a-a605-719fa5af6946" width="500">
