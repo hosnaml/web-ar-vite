@@ -364,7 +364,7 @@ export default function App() {
                   {/* Move DrawerAd closer to ImagePlane */}
                   <DrawerAd
                     key="drawer-model"
-                    position={[3, 1.0, -4.4]} // was -3.9
+                    position={[3.4, 1.1, -4.4]} // was -3.9
                     scale={[1.8, 1.8, 1.8]}
                     text="Modern Drawer"
                     textColor="#cccccc"

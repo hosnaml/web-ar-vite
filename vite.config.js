@@ -7,7 +7,7 @@ export default defineConfig({
   publicDir: "public",
   plugins: [react()],
   server: {
-    allowedHosts: ["arguments-vast-bathrooms-soccer.trycloudflare.com"],
+    allowedHosts: ["march-echo-shown-compromise.trycloudflare.com"],
     cors: true, // Enable CORS for development
   },
   build: {
